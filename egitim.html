@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Performansı - Klinik AI</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/app.js" defer></script>
+</head>
+<body>
+
+    <main class="main-content">
+        <div class="header">
+            <h1>Model Performansı (MLOps)</h1>
+            <p>Random Forest modelinin başarı metrikleri ve karmaşıklık matrisi.</p>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card metric-card--acc">
+                <h4>Doğruluk (Accuracy)</h4>
+                <div class="metric-card__deger" id="m_acc">%--</div>
+            </div>
+            <div class="metric-card metric-card--rec">
+                <h4>Duyarlılık (Recall)</h4>
+                <div class="metric-card__deger" id="m_rec">%--</div>
+            </div>
+            <div class="metric-card metric-card--prec">
+                <h4>Kesinlik (Precision)</h4>
+                <div class="metric-card__deger" id="m_prec">%--</div>
+            </div>
+            <div class="metric-card metric-card--f1">
+                <h4>F1-Skoru (F1-Score)</h4>
+                <div class="metric-card__deger" id="m_f1">%--</div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>📊 Model Performans Metrikleri</h3>
+                <div class="chart-alan"><canvas id="metrikGrafik"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3>🎯 Karmaşıklık Matrisi (Confusion Matrix)</h3>
+                <div class="chart-alan"><canvas id="cmGrafik"></canvas></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="card__title">🔍 Karmaşıklık Matrisi 2x2 Tablo Detayları</h2>
+            <div class="table-wrap">
+                <table class="cm-table">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" scope="col">Gerçek Durum</th>
+                            <th colspan="2" scope="col">Yapay Zeka Tahmini</th>
+                        </tr>
+                        <tr>
+                            <th scope="col">Tahmin: Sağlıklı (0)</th>
+                            <th scope="col">Tahmin: Hasta (1)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row">Gerçek: Sağlıklı (0)</th>
+                            <td class="cm-tn">TN (Doğru Olumsuz)<span class="cm-sayi" id="tn_val">-</span></td>
+                            <td class="cm-fp">FP (Yanlış Pozitif)<span class="cm-sayi" id="fp_val">-</span></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Gerçek: Hasta (1)</th>
+                            <td class="cm-fn">FN (Yanlış Olumsuz)<span class="cm-sayi" id="fn_val">-</span></td>
+                            <td class="cm-tp">TP (Doğru Pozitif)<span class="cm-sayi" id="tp_val">-</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <p class="sayfa-notu">
+            ℹ️ Hekimlerin bu teşhislere verdiği onay ve düzeltmeler ayrı bir sayfaya taşındı:
+            <a href="/geribildirim">Doktor Geri Bildirimleri</a>.
+        </p>
+    </main>
+
+<script>
+    const GRAFIK_ORTAK = {
+        responsive: true,
+        maintainAspectRatio: false
+    };
+
+    async function modelMetrikleriniYukle() {
+        try {
+            const data = await (await fetch('/model_metrikleri')).json();
+            if (data.hata) throw new Error(data.hata);
+
+            const yaz = (id, deger) => { document.getElementById(id).textContent = deger; };
+            yaz('m_acc', `%${data.accuracy}`);
+            yaz('m_rec', `%${data.recall}`);
+            yaz('m_prec', `%${data.precision}`);
+            yaz('m_f1', `%${data.f1_score}`);
+
+            const cm = data.confusion_matrix;
+            ['tn', 'fp', 'fn', 'tp'].forEach(k => yaz(`${k}_val`, cm[k]));
+
+            new Chart(document.getElementById('metrikGrafik'), {
+                type: 'bar',
+                data: {
+                    labels: ['Doğruluk', 'Duyarlılık', 'Kesinlik', 'F1-Skoru'],
+                    datasets: [{
+                        label: 'Performans Oranı (%)',
+                        data: [data.accuracy, data.recall, data.precision, data.f1_score],
+                        backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#8b5cf6'],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    ...GRAFIK_ORTAK,
+                    scales: { y: { beginAtZero: true, max: 100 }, x: { grid: { display: false } } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            new Chart(document.getElementById('cmGrafik'), {
+                type: 'doughnut',
+                data: {
+                    labels: [
+                        `TN (Doğru Olumsuz): ${cm.tn}`,
+                        `FP (Yanlış Pozitif): ${cm.fp}`,
+                        `FN (Yanlış Olumsuz): ${cm.fn}`,
+                        `TP (Doğru Pozitif): ${cm.tp}`
+                    ],
+                    datasets: [{
+                        data: [cm.tn, cm.fp, cm.fn, cm.tp],
+                        backgroundColor: ['#22c55e', '#f59e0b', '#ef4444', '#3b82f6'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    ...GRAFIK_ORTAK,
+                    cutout: '58%',
+                    plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 10, padding: 12 } } }
+                }
+            });
+        } catch (err) {
+            console.error('Metrikler yüklenirken hata:', err);
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', modelMetrikleriniYukle);
+</script>
+</body>
+</html>

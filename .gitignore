@@ -1,0 +1,71 @@
+# ============================================================
+# Klinik AI Asistan - Git yoksayma kuralları
+# ============================================================
+
+# --- Python derleme çıktıları ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# --- Sanal ortamlar ---
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# --- Ortam değişkenleri ve sırlar (ASLA depoya girmemeli) ---
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.crt
+secrets.json
+credentials.json
+
+# --- Veritabanı: HASTA VERİSİ İÇERİR, depoya girmemeli ---
+# Uygulama ilk açılışta veritabani_hazirla() ile kendisi
+# yeniden oluşturduğu için depoda tutulmasına gerek yoktur.
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+
+# --- IDE / editör ---
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# --- İşletim sistemi ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Log ve geçici dosyalar ---
+*.log
+*.tmp
+.cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ============================================================
+# BİLEREK YOKSAYILMAYANLAR (dağıtım için gereklidir)
+#
+#   *.pkl                 -> rf_model, scaler, imputer'lar ve
+#                            label_encoders. main.py bunları
+#                            açılışta yükler; depoda olmazsa
+#                            uygulama hiç başlamaz.
+#   heart_disease_uci.csv -> /model_metrikleri endpoint'i bu
+#                            dosyayı çalışma anında okur.
+#   static/               -> ortak style.css ve app.js.
+#
+# Bu dosyalar hassas veri içermez. rf_model.pkl ~2.2 MB'tır;
+# ileride model dosyaları büyürse Git LFS değerlendirilebilir.
+# ============================================================

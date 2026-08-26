@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doktor Geri Bildirimleri - Klinik AI</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/app.js" defer></script>
+</head>
+<body>
+
+    <main class="main-content">
+        <div class="header">
+            <h1>Doktor Geri Bildirimleri</h1>
+            <p>Hekimlerin yapay zeka teşhislerine verdiği onay ve düzeltmelerin tamamı. Bu havuz, modelin bir sonraki yeniden eğitiminde referans olarak kullanılır.</p>
+        </div>
+
+        <!-- Havuzun özeti -->
+        <div class="metrics-grid">
+            <div class="metric-card metric-card--acc">
+                <h4>Toplam Geri Bildirim</h4>
+                <div class="metric-card__deger" id="g_toplam">--</div>
+            </div>
+            <div class="metric-card metric-card--rec">
+                <h4>İsabetli Karar</h4>
+                <div class="metric-card__deger" id="g_isabetli">--</div>
+            </div>
+            <div class="metric-card metric-card--prec">
+                <h4>Düzeltilen (Hatalı)</h4>
+                <div class="metric-card__deger" id="g_hatali">--</div>
+            </div>
+            <div class="metric-card metric-card--f1">
+                <h4>Hekim Onay Oranı</h4>
+                <div class="metric-card__deger" id="g_oran">%--</div>
+            </div>
+        </div>
+
+        <!-- Geri bildirim havuzu tablosu -->
+        <div class="card">
+            <div class="card__ust">
+                <h2 class="card__title">👨‍⚕️ Geri Bildirim ve Düzeltme Havuzu</h2>
+                <div class="filtre-grubu" role="group" aria-label="Kayıtları filtrele">
+                    <button type="button" class="filtre-btn active" data-filtre="hepsi">Tümü</button>
+                    <button type="button" class="filtre-btn" data-filtre="dogru">İsabetli</button>
+                    <button type="button" class="filtre-btn" data-filtre="yanlis">Hatalı</button>
+                </div>
+            </div>
+
+            <div class="table-wrap">
+                <table class="tablo-duyarli">
+                    <thead>
+                        <tr>
+                            <th scope="col">Tarih</th>
+                            <th scope="col">Hasta Adı Soyadı</th>
+                            <th scope="col">AI Teşhisi</th>
+                            <th scope="col">Doktorun Düzeltmesi</th>
+                            <th scope="col">AI Başarı Durumu</th>
+                        </tr>
+                    </thead>
+                    <tbody id="geribildirimTablosu"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <p class="sayfa-notu">
+            ℹ️ Yeni geri bildirim, <a href="/">Yeni Muayene</a> ekranındaki analiz sonucundan veya
+            <a href="/gecmis">Hasta Kayıtları</a> sayfasındaki hasta detay penceresinden gönderilir.
+            Modelin başarı metriklerini <a href="/egitim">Model Performansı</a> sayfasından takip edebilirsiniz.
+        </p>
+    </main>
+
+<script>
+    let tumKayitlar = [];
+    let aktifFiltre = 'hepsi';
+
+    async function geribildirimleriYukle() {
+        const tbody = document.getElementById('geribildirimTablosu');
+
+        try {
+            const data = await (await fetch('/geribildirim_listesi')).json();
+            tumKayitlar = data.geribildirimler || [];
+        } catch (err) {
+            tbody.replaceChildren(bosSatir('Geri bildirimler yüklenemedi. Lütfen sayfayı yenileyin.', 5));
+            console.error('Geri bildirimler yüklenirken hata:', err);
+            return;
+        }
+
+        ozetiGuncelle();
+        tabloyuCiz();
+    }
+
+    /* Bir kaydın AI kararı ile doktor kararı aynıysa "isabetli" sayılır */
+    function isabetliMi(kayit) {
+        return kayit[3] === kayit[4];
+    }
+
+    function ozetiGuncelle() {
+        const toplam = tumKayitlar.length;
+        const isabetli = tumKayitlar.filter(isabetliMi).length;
+        const hatali = toplam - isabetli;
+
+        const yaz = (id, deger) => { document.getElementById(id).textContent = deger; };
+        yaz('g_toplam', toplam);
+        yaz('g_isabetli', isabetli);
+        yaz('g_hatali', hatali);
+        yaz('g_oran', toplam ? `%${((isabetli / toplam) * 100).toFixed(1)}` : '%--');
+    }
+
+    function tabloyuCiz() {
+        const tbody = document.getElementById('geribildirimTablosu');
+
+        const kayitlar = tumKayitlar.filter(k => {
+            if (aktifFiltre === 'dogru') return isabetliMi(k);
+            if (aktifFiltre === 'yanlis') return !isabetliMi(k);
+            return true;
+        });
+
+        tbody.replaceChildren();
+
+        if (!kayitlar.length) {
+            const mesaj = tumKayitlar.length
+                ? 'Bu filtreye uyan kayıt bulunmuyor.'
+                : 'Henüz hiçbir geri bildirim veya düzeltme yapılmamış.';
+            tbody.appendChild(bosSatir(mesaj, 5));
+            return;
+        }
+
+        /* XSS koruması: hasta adı ve teşhis metinleri textContent ile basılır.
+           data-label ise mobilde başlık satırı gizlenince etiket görevi görür. */
+        kayitlar.forEach(kayit => {
+            const [tarih, ad, soyad, aiKarari, doktorKarari] = kayit;
+            const adSoyad = `${ad || 'Bilinmiyor'} ${soyad || ''}`.trim().toUpperCase();
+            const isabetli = isabetliMi(kayit);
+
+            const satir = document.createElement('tr');
+            satir.append(
+                veriHucresi(tarih, 'Tarih', 't-tarih'),
+                veriHucresi(adSoyad, 'Hasta', 't-isim'),
+                rozetHucresi(`🤖 ${aiKarari}`, 'badge badge--ai', 'AI Teşhisi'),
+                rozetHucresi(`👨‍⚕️ ${doktorKarari}`, 'badge badge--doktor', 'Doktor'),
+                rozetHucresi(
+                    isabetli ? '✅ İsabetli Karar' : '❌ Hatalı (Öğrenilecek)',
+                    `durum durum--${isabetli ? 'dogru' : 'yanlis'}`,
+                    'Durum'
+                )
+            );
+
+            tbody.appendChild(satir);
+        });
+    }
+
+    document.querySelectorAll('.filtre-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.filtre-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            aktifFiltre = btn.dataset.filtre;
+            tabloyuCiz();
+        });
+    });
+
+    window.addEventListener('DOMContentLoaded', geribildirimleriYukle);
+</script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+# ============================================================
+# Klinik AI Asistan - Python Bağımlılıkları
+# Kurulum:  pip install -r requirements.txt
+# Geliştirme ortamı: Python 3.13.14
+# ============================================================
+
+# --- Web çatısı ve sunucu (main.py) ---
+fastapi==0.141.1
+uvicorn[standard]==0.52.4
+pydantic==2.13.4
+
+# --- Veri işleme (main.py, model_egit.py) ---
+pandas==3.0.5
+numpy==2.5.2
+
+# ------------------------------------------------------------
+# DİKKAT: Aşağıdaki iki sürüm SABİT kalmalıdır.
+# Projedeki *.pkl dosyaları (rf_model, scaler, imputer'lar,
+# label_encoders) bu sürümlerle üretilmiştir. Farklı bir
+# scikit-learn/joblib sürümünde model ya hiç yüklenmez ya da
+# sessizce hatalı sonuç üretir. Sürüm yükseltilecekse
+# model_egit.py yeniden çalıştırılıp .pkl dosyaları
+# yeniden üretilmelidir.
+# ------------------------------------------------------------
+scikit-learn==1.9.0
+joblib==1.5.3
+
+# Not: sqlite3, os, datetime, warnings Python standart
+# kütüphanesinin parçasıdır; ayrıca kurulmaları gerekmez.

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Klinik Bilgi Bankası - Klinik AI</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/app.js" defer></script>
+</head>
+<body>
+
+    <main class="main-content">
+        <div class="header">
+            <h1>Klinik Bilgi Bankası</h1>
+            <p>Modelin girdi olarak kullandığı 13 klinik değişkenin patofizyolojik temeli, ölçüm yöntemi ve kardiyovasküler risk tahminindeki ayırt edici değeri.</p>
+        </div>
+
+        <div class="card">
+
+            <button class="accordion" type="button" aria-expanded="false">1. Yaş (Age)</button>
+            <div class="panel">
+                <div class="panel__icerik">
+                    <p>Yaş, kardiyovasküler risk modellerinde değiştirilemeyen (non-modifiable) temel belirteçtir. İlerleyen yaşla birlikte arter duvarında elastin kaybı, kollajen birikimi ve intima-media kalınlaşması gelişir; bu süreç arteriyel sertleşme (arterial stiffness) ve endotel disfonksiyonu ile sonuçlanır. Model açısından yaş, aterosklerotik yüke maruz kalınan kümülatif süreyi temsil ettiği için diğer tüm bulguların üzerine yorumlanacağı taban riski belirler.</p>
+                    <p><span class="badge badge--iyi">Sağlıklı Durum</span> Genç erişkinlerde endotel onarım kapasitesi yüksek, plak yükü düşüktür; aynı laboratuvar değerleri bu grupta daha düşük mutlak risk anlamına gelir.</p>
+                    <p><span class="badge badge--kotu">Riskli Durum</span> Erkeklerde 45, kadınlarda 55 yaş ve üzeri geleneksel risk eşiği kabul edilir. Bu eşiklerin üzerinde diğer parametreler normal sınırlarda olsa dahi ön test olasılığı belirgin biçimde yükselir.</p>
+                </div>
+            </div>
+
+            <button class="accordion" type="button" aria-expanded="false">2. Cinsiyet (Sex)</button>
+            <div class="panel">
+                <div class="panel__icerik">
+                    <p>Biyolojik cinsiyet, koroner arter hastalığının (KAH) ortaya çıkış yaşını, ilerleme hızını ve klinik sunum biçimini etkiler. Premenopozal dönemde östrojenin lipid profilini olumlu yönde düzenlemesi ve endotelde nitrik oksit aracılı vazodilatasyonu desteklemesi kadınlarda koruyucu bir etki oluşturur. Model, aynı bulgu setinin cinsiyete göre farklı olasılık ağırlığı taşıdığını bu değişken üzerinden öğrenir.</p>
+                    <p><span class="badge badge--iyi">Kadınlar (Menopoz Öncesi)</span> Östrojenin HDL kolesterolü artırıp LDL kolesterolü düşüren etkisi, aterosklerotik sürecin başlangıcını ortalama on yıl kadar geciktirir.</p>
+                    <p><span class="badge badge--kotu">Erkekler &amp; Postmenopozal Kadınlar</span> Erkeklerde KAH ortalama 7-10 yıl daha erken ortaya çıkar. Menopoz sonrasında östrojenin koruyuculuğu ortadan kalkar ve risk hızla erkeklerdeki düzeye yaklaşır; ayrıca kadınlarda atipik semptom sunumunun sık olması tanının gecikmesine yol açabilir.</p>
+                </div>
+            </div>
+
+            <button class="accordion" type="button" aria-expanded="false">3. Göğüs Ağrısı Tipi (Chest Pain - CP)</button>
+            <div class="panel">
+                <div class="panel__icerik">
+                    <p>Anjina pektoris, miyokardın oksijen ihtiyacı ile koroner akım yoluyla sağlanan oksijen sunumu arasındaki dengesizliğin klinik yansımasıdır. Sınıflandırma Diamond-Forrester ölçütlerine dayanır: retrosternal yerleşim, efor ile tetiklenme ve istirahat veya nitrat ile gerileme. Üç ölçütün tamamının bulunması tipik anjina, ikisinin bulunması atipik anjina, bir veya hiçbirinin bulunmaması anjinal olmayan ağrı olarak değerlendirilir.</p>
+                    <p><span class="badge badge--iyi">Anjinal Olmayan Ağrı</span> Kas-iskelet sistemi, gastroözofageal reflü veya anksiyete kaynaklı ağrılar bu gruba girer; miyokart iskemisi ile ilişkisi zayıftır ve ön test olasılığını düşürür.</p>
+                    <p><span class="badge badge--kotu">Tipik Anjina &amp; Semptomsuz (Asymptomatic)</span> Tipik anjina, obstrüktif KAH için yüksek ön test olasılığı taşır. Semptomsuz grup ise yanıltıcıdır: özellikle diyabetik otonom nöropatisi olan hastalarda ağrı algısı köreldiği için sessiz iskemi gelişebilir. Bu nedenle ağrının yokluğu hastalığın yokluğu anlamına gelmez ve model bu kategoriyi düşük riskli kabul etmez.</p>
+                </div>
+            </div>
+
+            <button class="accordion" type="button" aria-expanded="false">4. İstirahat Tansiyonu (Trestbps)</button>
+            <div class="panel">
+                <div class="panel__icerik">
+                    <p>Hastaneye kabul sırasında istirahat halinde ölçülen sistolik kan basıncıdır (mmHg). Kronik basınç yükü sol ventrikülün ardyükünü (afterload) artırarak konsantrik hipertrofiye ve miyokardiyal oksijen tüketiminde kalıcı yükselmeye yol açar. Aynı zamanda artmış duvar gerilimi ve türbülan akım endotel hasarını hızlandırarak aterom plağı gelişimine zemin hazırlar.</p>
+                    <p><span class="badge badge--iyi">Sağlıklı Durum</span> 120/80 mmHg altındaki değerler optimal kabul edilir; koroner perfüzyon basıncı korunurken damar duvarı üzerindeki mekanik stres asgari düzeydedir.</p>
+                    <p><span class="badge badge--kotu">Riskli Durum</span> İstirahatte 140 mmHg ve üzeri değerler hipertansiyon olarak değerlendirilir. Uzun vadede sol ventrikül hipertrofisi, diyastolik disfonksiyon ve koroner akım rezervinde azalma ile ilişkilidir; bu üçlü, iskemiye yatkınlığı doğrudan artırır.</p>
+                </div>
+            </div>
+
+            <button class="accordion" type="button" aria-expanded="false">5. Serum Kolesterol Düzeyi (Chol)</button>
+            <div class="panel">
+                <div class="panel__icerik">
+                    <p>Serum total kolesterol konsantrasyonudur (mg/dL). Dolaşımdaki LDL partikülleri subendotelyal alanda tutulup oksitlendiğinde makrofajlar tarafından alınır ve köpük hücrelerine dönüşerek aterom plağının lipid çekirdeğini oluşturur. Akademik açıdan önemli bir sınırlılık vardır: total kolesterol, aterojenik LDL ile koruyucu HDL fraksiyonlarını ayırmadığı için görece kaba bir belirteçtir; bu nedenle model bu değeri tek başına değil, diğer bulgularla birlikte ağırlıklandırır.</p>
+                    <p><span class="badge badge--iyi">Sağlıklı Durum</span> 200 mg/dL altındaki değerler istenen aralıktadır ve plak oluşum hızının düşük olduğunu düşündürür.</p>
+                    <p><span class="badge badge--kotu">Riskli Durum</span> 240 mg/dL ve üzeri değerler yüksek kabul edilir. Kronik hiperlipidemi, plak hacminin artmasının yanı sıra ince fibröz başlıklı, rüptüre yatkın "kararsız plak" oluşumuna da katkıda bulunur.</p>
+                </div>
+            </div>
+
+            <button class="accordion" type="button" aria-expanded="false">6. Açlık Kan Şekeri (Fbs)</button>
+            <div class="panel">
+                <div class="panel__icerik">
+                    <p>En az sekiz saatlik açlığı takiben ölçülen kan glukozunun 120 mg/dL eşiğini aşıp aşmadığını gösteren ikili (binary) bir değişkendir. Kronik hiperglisemi; ileri glikasyon son ürünlerinin (AGE) birikimi, endotel disfonksiyonu, artmış oksidatif stres ve protrombotik durum aracılığıyla aterosklerozu hızlandırır. Diyabet, güncel kılavuzlarda kardiyovasküler risk bakımından "koroner arter hastalığı eşdeğeri" olarak konumlandırılır.</p>
+                    <p><span class="badge badge--iyi">Sağlıklı Durum</span> 120 mg/dL altındaki değerler (Hayır) normoglisemiyi işaret eder ve metabolik kaynaklı ek damar hasarı beklenmez.</p>
+                    <p><span class="badge badge--kotu">Riskli Durum</span> 120 mg/dL üzerindeki değerler (Evet) bozulmuş açlık glukozu veya diyabeti düşündürür. Diyabetik hastalarda yaygın ve diffüz koroner tutulum görülmesinin yanı sıra otonom nöropatiye bağlı sessiz iskemi riski de artar; bu nedenle model için yüksek bilgi değeri taşır.</p>
+                </div>
+            </div>
+
+            <button class="accordion" type="button" aria-expanded="false">7. İstirahat EKG Bulgusu (Restecg)</button>
+            <div class="panel">
+                <div class="panel__icerik">
+                    <p>İstirahat halinde çekilen 12 derivasyonlu elektrokardiyogram, miyokardın depolarizasyon ve repolarizasyon özelliklerini yansıtır. Bu değişken üç kategoriye ayrılır: normal, ST-T dalga anormalliği ve sol ventrikül hipertrofisi (Estes ölçütlerine göre). EKG, iskemik ve yapısal miyokart değişikliklerini girişimsel olmayan biçimde yakalayan ilk basamak incelemedir.</p>
+                    <p><span class="badge badge--iyi">Normal</span> İleti ve repolarizasyon paternlerinin korunmuş olması, istirahat koşullarında anlamlı bir iskemi veya yapısal remodelling bulgusu olmadığını gösterir.</p>
+                    <p><span class="badge badge--kotu">ST-T Anormalliği / Sol Ventrikül Hipertrofisi</span> ST segmenti ve T dalgasındaki değişiklikler repolarizasyon bozukluğunu ve olası subendokardiyal iskemiyi düşündürür. Sol ventrikül hipertrofisi ise kronik basınç yükünün yapısal sonucudur ve kardiyovasküler olaylar için bağımsız bir öngördürücü olarak kabul edilir.</p>
+                </div>
+            </div>
+
+            <button class="accordion" type="button" aria-expanded="false">8. Maksimum Kalp Atış Hızı (Thalach)</button>
+            <div class="panel">
+                <div class="panel__icerik">
+                    <p>Egzersiz stres testi sırasında ulaşılabilen en yüksek kalp hızıdır. Yaşa göre beklenen maksimum hız kabaca "220 - yaş" formülüyle tahmin edilir; bu değerin %85'ine ulaşılamaması kronotropik yetersizlik olarak tanımlanır. Kronotropik yetersizlik hem otonom sinir sistemi disfonksiyonunun hem de eforla ortaya çıkan miyokart iskemisinin göstergesidir ve literatürde bağımsız bir mortalite öngördürücüsü olarak yer alır.</p>
+                    <p><span class="badge badge--iyi">Sağlıklı Durum</span> Efor sırasında yaşa uygun yüksek bir zirve hıza ulaşılabilmesi, korunmuş kronotropik yanıtı ve yeterli koroner akım rezervini yansıtır.</p>
+                    <p><span class="badge badge--kotu">Riskli Durum</span> Artan iş yüküne rağmen kalp hızının yeterince yükselememesi, miyokardın oksijen talebini karşılayamadığına veya testin iskemi/semptom nedeniyle erken sonlandırıldığına işaret eder. Bu nedenle düşük zirve hız, modelde riski artıran yönde katkı sağlar.</p>
+                </div>
+            </div>
+
+            <button class="accordion" type="button" aria-expanded="false">9. Egzersize Bağlı Anjina (Exang)</button>
+            <div class="panel">
+                <div class="panel__icerik">
+                    <p>Efor testi sırasında anjinal göğüs ağrısının ortaya çıkıp çıkmadığını belirten ikili değişkendir. Darlık içeren bir koroner arter, egzersizle artan miyokardiyal oksijen talebini karşılayacak akım rezervini sağlayamadığında talep iskemisi (demand ischemia) gelişir ve semptom ortaya çıkar. Bulgunun obstrüktif KAH için özgüllüğü (spesifisite) yüksektir; yani pozitif olduğunda anlamlı darlık olasılığı belirgin biçimde artar.</p>
+                    <p><span class="badge badge--iyi">Sağlıklı Durum</span> Egzersiz sırasında ağrının ortaya çıkmaması, koroner akım rezervinin artan talebi karşılayabildiğini düşündürür.</p>
+                    <p><span class="badge badge--kotu">Riskli Durum</span> Eforla tetiklenen anjina, hemodinamik olarak anlamlı bir darlığın varlığına işaret eder. Semptomun düşük iş yükünde ortaya çıkması ise darlığın ciddiyetinin ve iskemik alanın genişliğinin arttığını gösterir.</p>
+                </div>
+            </div>
+
+            <button class="accordion" type="button" aria-expanded="false">10. ST Segment Çökmesi (Oldpeak)</button>
+            <div class="panel">
+                <div class="panel__icerik">
+                    <p>Egzersiz sırasında ST segmentinin istirahat düzeyine göre milimetre cinsinden ne kadar çöktüğünü ifade eden sürekli bir değişkendir. ST çökmesi, subendokardiyal tabakanın iskemiye en duyarlı bölge olması nedeniyle koroner yetmezliğin elektriksel yansımasıdır; J noktasından 60-80 ms sonra ölçülen 1 mm ve üzeri horizontal veya aşağı eğimli çökme testi pozitif kılar. Çökmenin derinliği iskemik miyokart alanının genişliği ve darlığın ciddiyeti ile korelasyon gösterdiği için model açısından en güçlü nicel belirteçlerden biridir.</p>
+                    <p><span class="badge badge--iyi">Sağlıklı Durum</span> Çökmenin bulunmaması veya 0,5 mm altında kalması, efor altında anlamlı bir subendokardiyal iskemi gelişmediğini destekler.</p>
+                    <p><span class="badge badge--kotu">Riskli Durum</span> 1,5-2,0 mm ve üzerindeki çökmeler ciddi iskemiyi gösterir. Çökmenin düşük iş yükünde başlaması, egzersiz sonrası uzun süre devam etmesi veya çok sayıda derivasyonda görülmesi, çok damar hastalığı olasılığını güçlendiren yüksek riskli bulgulardır.</p>
+                </div>
+            </div>
+
+            <button class="accordion" type="button" aria-expanded="false">11. ST Segment Eğimi (Slope)</button>
+            <div class="panel">
+                <div class="panel__icerik">
+                    <p>Zirve egzersiz anında ST segmentinin morfolojik yönünü tanımlar ve çökme miktarını (Oldpeak) tamamlayan niteliksel bilgiyi sağlar. Aynı derinlikteki bir çökme, eğim paternine göre tamamen farklı tanısal ağırlık taşır; bu nedenle iki değişken model tarafından birlikte değerlendirildiğinde ayırt edicilik belirgin biçimde artar.</p>
+                    <p><span class="badge badge--iyi">Yukarı Eğimli (Upsloping)</span> Egzersiz sırasında sık karşılaşılan ve büyük ölçüde iyi huylu kabul edilen paterndir; yalancı pozitiflik oranı yüksek olduğu için tek başına iskemi kanıtı sayılmaz.</p>
+                    <p><span class="badge badge--kotu">Horizontal (Düz) / Aşağı Eğimli (Downsloping)</span> Horizontal çökme iskemi için anlamlı, aşağı eğimli çökme ise en özgül paterndir. Aşağı eğimli morfoloji, yaygın subendokardiyal iskemiyi ve ileri koroner arter hastalığını düşündürdüğü için model tarafından güçlü bir risk göstergesi olarak öğrenilir.</p>
+                </div>
+            </div>
+
+            <button class="accordion" type="button" aria-expanded="false">12. Tutulan Majör Damar Sayısı (CA)</button>
+            <div class="panel">
+                <div class="panel__icerik">
+                    <p>Floroskopi eşliğinde görüntülenerek anlamlı tutulum saptanan majör epikardiyal koroner arter sayısıdır (0-3). Tek damar, iki damar ve üç damar hastalığı ayrımı; hem uzun dönem prognozu hem de medikal tedavi, perkütan girişim veya baypas cerrahisi arasındaki revaskülarizasyon kararını doğrudan belirler. Bu değişken, dolaylı bir belirteç olmaktan ziyade anatomik hastalık yükünü doğrudan ölçtüğü için modelin en yüksek ayırt edici güce sahip girdilerinden biridir.</p>
+                    <p><span class="badge badge--iyi">Sağlıklı Durum</span> Değerin 0 olması, majör epikardiyal damarlarda anlamlı düzeyde tutulum saptanmadığını ve koroner akımın korunduğunu gösterir.</p>
+                    <p><span class="badge badge--kotu">Riskli Durum</span> 1, 2 veya 3 damar tutulumu aterosklerotik yükün yaygınlığını yansıtır ve tutulan damar sayısı arttıkça prognoz kötüleşir. Özellikle üç damar hastalığı, sol ventrikül fonksiyonlarında bozulma ve olumsuz kardiyak olay riski bakımından en ağır tabloyu oluşturur.</p>
+                </div>
+            </div>
+
+            <button class="accordion" type="button" aria-expanded="false">13. Miyokart Perfüzyon Sintigrafisi (Thal)</button>
+            <div class="panel">
+                <div class="panel__icerik">
+                    <p>Bu değişken, adlandırmasına rağmen bir hemoglobinopati olan talasemiyi değil, Talyum-201 ile yapılan miyokart perfüzyon sintigrafisinin sonucunu ifade eder; "thal" kısaltması veri setinde yerleşmiş bir isimlendirmedir. İnceleme, radyoaktif işaretli maddenin miyokarda dağılımını stres ve istirahat koşullarında karşılaştırarak bölgesel kanlanma kusurlarını ortaya koyar. Bu yöntemin klinik değeri, canlı ancak yetersiz beslenen miyokart ile geri dönüşsüz skar dokusunu birbirinden ayırabilmesinden kaynaklanır.</p>
+                    <p><span class="badge badge--iyi">Normal Perfüzyon</span> Hem stres hem istirahat görüntülerinde homojen tutulum izlenmesi, miyokardın tüm bölgelerine yeterli kan akımının ulaştığını gösterir.</p>
+                    <p><span class="badge badge--kotu">Sabit Kusur (Fixed Defect)</span> Stres ve istirahat görüntülerinin her ikisinde de devam eden kalıcı tutulum defektidir. Geçirilmiş miyokart enfarktüsüne bağlı skar dokusunu yansıtır; ilgili bölge canlı olmadığı için revaskülarizasyondan fonksiyonel kazanç beklenmez.</p>
+                    <p><span class="badge badge--kotu">Tersine Çevrilebilir Kusur (Reversible Defect)</span> Stres sırasında ortaya çıkan, istirahatte ise düzelen defekttir. Miyokardın canlı olduğunu ancak efor altında iskemiye girdiğini gösterir; aktif iskemiye işaret ettiği ve revaskülarizasyondan fayda görebilecek bir alanı tanımladığı için klinik olarak en öncelikli bulgulardandır.</p>
+                </div>
+            </div>
+
+        </div>
+
+        <p class="sayfa-notu">
+            ℹ️ Bu sayfadaki açıklamalar, modelin kullandığı değişkenleri yorumlamaya yönelik eğitim amaçlı özetlerdir;
+            tanı ölçütü veya tedavi kılavuzu yerine geçmez. Belirtilen eşik değerler literatürde yaygın kabul gören
+            referanslar olup hastanın bütüncül klinik değerlendirmesi ve nihai teşhis sorumluluğu hekime aittir.
+        </p>
+    </main>
+
+<script>
+    /* Açılır-kapanır liste: aynı anda tek panel açık kalır */
+    document.querySelectorAll('.accordion').forEach(baslik => {
+        baslik.addEventListener('click', () => {
+            const acilacak = !baslik.classList.contains('active');
+
+            document.querySelectorAll('.accordion.active').forEach(acik => {
+                acik.classList.remove('active');
+                acik.setAttribute('aria-expanded', 'false');
+                acik.nextElementSibling.style.maxHeight = null;
+            });
+
+            if (acilacak) {
+                const panel = baslik.nextElementSibling;
+                baslik.classList.add('active');
+                baslik.setAttribute('aria-expanded', 'true');
+                panel.style.maxHeight = panel.scrollHeight + 'px';
+            }
+        });
+    });
+
+    /* Ekran döndüğünde / yeniden boyutlandığında açık panelin yüksekliğini tazele */
+    window.addEventListener('resize', () => {
+        document.querySelectorAll('.accordion.active').forEach(acik => {
+            acik.nextElementSibling.style.maxHeight = acik.nextElementSibling.scrollHeight + 'px';
+        });
+    });
+</script>
+</body>
+</html>

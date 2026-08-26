@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hasta Kayıtları - Klinik AI</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="/static/app.js" defer></script>
+</head>
+<body>
+
+    <main class="main-content">
+        <div class="header">
+            <h1>Gösterge Paneli</h1>
+            <p>Veritabanındaki hastaların istatistiksel dağılımı ve geçmiş analiz sonuçları.</p>
+        </div>
+
+        <div class="charts-grid charts-grid--dashboard">
+            <div class="chart-card">
+                <h3>Genel Teşhis Dağılımı</h3>
+                <div class="chart-alan"><canvas id="pastaGrafik"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3>Yaş Gruplarına Göre Risk Analizi</h3>
+                <div class="chart-alan"><canvas id="sutunGrafik"></canvas></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="card__title">📂 Son Muayene Kayıtları</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Tarih</th>
+                            <th scope="col">Ad Soyad</th>
+                            <th scope="col">Yaş / Cinsiyet</th>
+                            <th scope="col">Yapay Zeka Teşhisi</th>
+                            <th scope="col">Risk</th>
+                        </tr>
+                    </thead>
+                    <tbody id="kayitlarTablosu"></tbody>
+                </table>
+            </div>
+            <div class="pagination" id="sayfalamaKutusu"></div>
+        </div>
+    </main>
+
+    <!-- Hasta detay penceresi -->
+    <div id="hastaModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalIsim">
+        <div class="modal__icerik">
+            <div class="modal__ust">
+                <h2 id="modalIsim">Hasta Detayları</h2>
+                <button class="modal__kapat" type="button" aria-label="Kapat" onclick="modalKapat()">&times;</button>
+            </div>
+            <p class="modal__tarih" id="modalTarih"></p>
+
+            <div class="detay-grid">
+                <div><strong>Yaş / Cinsiyet</strong> <span id="m_yas"></span></div>
+                <div><strong>Tansiyon</strong> <span id="m_tan"></span></div>
+                <div><strong>Kolesterol</strong> <span id="m_kol"></span></div>
+                <div><strong>Açlık Şekeri (&gt;120)</strong> <span id="m_fbs"></span></div>
+                <div><strong>Göğüs Ağrısı</strong> <span id="m_cp"></span></div>
+                <div><strong>Kalp Atış Hızı</strong> <span id="m_kalp"></span></div>
+                <div><strong>EKG Sonucu</strong> <span id="m_ekg"></span></div>
+                <div><strong>Egzersiz Ağrısı</strong> <span id="m_exang"></span></div>
+                <div><strong>ST Depresyonu</strong> <span id="m_old"></span></div>
+                <div><strong>Eğim</strong> <span id="m_slope"></span></div>
+                <div><strong>Damar (CA)</strong> <span id="m_ca"></span></div>
+                <div><strong>Talasemi</strong> <span id="m_thal"></span></div>
+            </div>
+
+            <div class="modal__ozet">
+                <h3 id="m_teshis"></h3>
+                <h4 id="m_risk"></h4>
+                <p class="aciklama-kutu" id="m_aciklama"></p>
+
+                <div class="feedback">
+                    <p class="feedback__soru">Yapay zekanın bu teşhisi doğru muydu?</p>
+                    <div class="feedback__butonlar">
+                        <button type="button" class="btn btn--ok" onclick="eskiGeribildirim('Doğru')">👍 Doğruydu</button>
+                        <button type="button" class="btn btn--risk" onclick="eskiGeribildirim('Yanlış')">👎 Yanlıştı (Eğitime Ekle)</button>
+                    </div>
+                    <p class="feedback__mesaj" id="m_feedbackMesaj" hidden></p>
+                </div>
+            </div>
+
+            <button class="btn btn--pdf btn--block" type="button" style="margin-top:20px" onclick="eskiPdfIndir()">
+                📄 Bu Muayenenin PDF Raporunu İndir
+            </button>
+        </div>
+    </div>
+
+<script>
+    /* Kayıt dizisinin sütun sırası (main.py /kayitlar sorgusuyla aynı) */
+    const S = {
+        tarih: 0, ad: 1, soyad: 2, yas: 3, cinsiyet: 4, cp: 5, tansiyon: 6, kolesterol: 7,
+        fbs: 8, restecg: 9, thalch: 10, exang: 11, oldpeak: 12, slope: 13, ca: 14, thal: 15,
+        teshis: 16, risk: 17, aciklama: 18, id: 19
+    };
+
+    let globalHastalar = [];
+    let seciliHasta = null;
+
+    async function grafikleriCiz() {
+        const data = await (await fetch('/istatistik')).json();
+
+        let saglikliSayisi = 0, riskliSayisi = 0;
+        data.risk_dagilimi.forEach(([teshis, adet]) => {
+            if (riskliMi(teshis)) riskliSayisi = adet; else saglikliSayisi = adet;
+        });
+
+        new Chart(document.getElementById('pastaGrafik'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Sağlıklı', 'Riskli'],
+                datasets: [{ data: [saglikliSayisi, riskliSayisi], backgroundColor: ['#22c55e', '#ef4444'], borderWidth: 0 }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, cutout: '62%',
+                plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16 } } }
+            }
+        });
+
+        const etiketler = [], riskli = [], saglikli = [];
+        data.yas_dagilimi.forEach(([grup, r, s]) => { etiketler.push(grup); riskli.push(r); saglikli.push(s); });
+
+        new Chart(document.getElementById('sutunGrafik'), {
+            type: 'bar',
+            data: {
+                labels: etiketler,
+                datasets: [
+                    { label: 'Riskli', data: riskli, backgroundColor: '#ef4444', borderRadius: 5 },
+                    { label: 'Sağlıklı', data: saglikli, backgroundColor: '#22c55e', borderRadius: 5 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } },
+                plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16 } } }
+            }
+        });
+    }
+
+    async function tabloyuDoldur(sayfaNumarasi) {
+        const data = await (await fetch(`/kayitlar?sayfa=${sayfaNumarasi}`)).json();
+        globalHastalar = data.son_muayeneler;
+
+        const tbody = document.getElementById('kayitlarTablosu');
+        tbody.replaceChildren();
+
+        if (!globalHastalar.length) {
+            tbody.appendChild(bosSatir('Henüz kayıtlı muayene bulunmuyor.', 5));
+        } else {
+            /* XSS koruması: hasta adı gibi veriler innerHTML ile değil,
+               textContent kullanan yardımcılarla basılır. */
+            globalHastalar.forEach((hasta, index) => {
+                const teshis = hasta[S.teshis];
+
+                const satir = document.createElement('tr');
+                satir.className = 'satir';
+                satir.tabIndex = 0;
+                satir.addEventListener('click', () => detayAc(index));
+                satir.addEventListener('keydown', olay => {
+                    if (olay.key === 'Enter' || olay.key === ' ') {
+                        olay.preventDefault();
+                        detayAc(index);
+                    }
+                });
+
+                satir.append(
+                    veriHucresi(hasta[S.tarih], 'Tarih', 't-tarih'),
+                    veriHucresi(`${hasta[S.ad]} ${hasta[S.soyad]}`, 'Hasta', 't-isim'),
+                    veriHucresi(`${hasta[S.yas]} / ${cevir(hasta[S.cinsiyet])}`, 'Yaş / Cinsiyet'),
+                    rozetHucresi(teshis, `badge badge--${riskliMi(teshis) ? 'riskli' : 'saglikli'}`, 'Teşhis'),
+                    veriHucresi(hasta[S.risk], 'Risk', 't-oran')
+                );
+
+                tbody.appendChild(satir);
+            });
+        }
+
+        const pagination = document.getElementById('sayfalamaKutusu');
+        pagination.innerHTML = '';
+        for (let i = 1; i <= data.toplam_sayfa; i++) {
+            const btn = document.createElement('button');
+            btn.className = `page-btn${i === data.aktif_sayfa ? ' active' : ''}`;
+            btn.textContent = i;
+            btn.onclick = () => tabloyuDoldur(i);
+            pagination.appendChild(btn);
+        }
+    }
+
+    function detayAc(index) {
+        const h = seciliHasta = globalHastalar[index];
+
+        const yaz = (id, deger) => { document.getElementById(id).textContent = deger; };
+        yaz('modalIsim', `${h[S.ad]} ${h[S.soyad]}`.toUpperCase());
+        yaz('modalTarih', `Muayene Tarihi: ${h[S.tarih]}`);
+        yaz('m_yas', `${h[S.yas]} / ${cevir(h[S.cinsiyet])}`);
+        yaz('m_cp', cevir(h[S.cp]));
+        yaz('m_tan', `${h[S.tansiyon]} mmHg`);
+        yaz('m_kol', `${h[S.kolesterol]} mg/dl`);
+        yaz('m_fbs', cevir(h[S.fbs]));
+        yaz('m_ekg', cevir(h[S.restecg]));
+        yaz('m_kalp', `${h[S.thalch]} bpm`);
+        yaz('m_exang', cevir(h[S.exang]));
+        yaz('m_old', h[S.oldpeak]);
+        yaz('m_slope', cevir(h[S.slope]));
+        yaz('m_ca', h[S.ca]);
+        yaz('m_thal', cevir(h[S.thal]));
+
+        const teshis = document.getElementById('m_teshis');
+        teshis.textContent = h[S.teshis].toUpperCase();
+        teshis.style.color = riskliMi(h[S.teshis]) ? '#dc2626' : '#16a34a';
+        yaz('m_risk', `Risk Oranı: ${h[S.risk]}`);
+        yaz('m_aciklama', `ℹ️ ${h[S.aciklama]}`);
+
+        document.getElementById('m_feedbackMesaj').hidden = true;
+        document.getElementById('hastaModal').classList.add('acik');
+    }
+
+    function modalKapat() { document.getElementById('hastaModal').classList.remove('acik'); }
+
+    document.addEventListener('click', e => { if (e.target.id === 'hastaModal') modalKapat(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') modalKapat(); });
+
+    async function eskiGeribildirim(durum) {
+        const orijinalTeshis = seciliHasta[S.teshis];
+        const gercekKarar = durum === 'Doğru'
+            ? orijinalTeshis
+            : (riskliMi(orijinalTeshis) ? 'Sağlıklı' : 'Riskli (Hasta Olabilir)');
+
+        const response = await fetch('/geribildirim', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                hasta_id: seciliHasta[S.id],
+                orijinal_teshis: orijinalTeshis,
+                doktor_karari: gercekKarar
+            })
+        });
+        const sonuc = await response.json();
+
+        const mesaj = document.getElementById('m_feedbackMesaj');
+        mesaj.textContent = sonuc.mesaj;
+        mesaj.hidden = false;
+    }
+
+    function eskiPdfIndir() {
+        const h = seciliHasta;
+        pdfRaporIndir({
+            ad: h[S.ad], soyad: h[S.soyad],
+            yas: `${h[S.yas]} Yaş`, cinsiyet: h[S.cinsiyet],
+            cp: h[S.cp], tansiyon: h[S.tansiyon], kolesterol: h[S.kolesterol], fbs: h[S.fbs],
+            restecg: h[S.restecg], thalch: h[S.thalch], exang: h[S.exang],
+            oldpeak: h[S.oldpeak], slope: h[S.slope], ca: h[S.ca], thal: h[S.thal],
+            teshis: h[S.teshis], risk: h[S.risk], aciklama: h[S.aciklama],
+            tarih: h[S.tarih],
+            altBaslik: 'Geçmiş Kayıt Kardiyolojik Risk Analiz Raporu',
+            dosyaAdi: `${h[S.ad]}_${h[S.soyad]}_Eski_Rapor.pdf`
+        });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => { tabloyuDoldur(1); grafikleriCiz(); });
+</script>
+</body>
+</html>

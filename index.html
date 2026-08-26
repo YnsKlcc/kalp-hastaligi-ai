@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yeni Muayene - Klinik AI</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="/static/app.js" defer></script>
+</head>
+<body>
+
+    <main class="main-content">
+        <div class="header">
+            <h1>Yeni Muayene</h1>
+            <p>Yapay zeka destekli kardiyolojik risk analizi için hasta bulgularını giriniz.</p>
+        </div>
+
+        <div class="card">
+            <form id="muayeneFormu" class="form-grid" onsubmit="tahminYap(event)">
+                <div class="form-group">
+                    <label for="ad">Ad</label>
+                    <input id="ad" type="text" name="ad" placeholder="Hastanın adı" autocomplete="off" required>
+                </div>
+                <div class="form-group">
+                    <label for="soyad">Soyad</label>
+                    <input id="soyad" type="text" name="soyad" placeholder="Hastanın soyadı" autocomplete="off" required>
+                </div>
+                <div class="form-group">
+                    <label for="age">Yaş</label>
+                    <input id="age" type="number" name="age" value="55" min="1" max="120" required>
+                </div>
+                <div class="form-group">
+                    <label for="sex">Cinsiyet</label>
+                    <select id="sex" name="sex">
+                        <option value="Male">Erkek</option>
+                        <option value="Female">Kadın</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="cp">Göğüs Ağrısı Tipi (Cp)</label>
+                    <select id="cp" name="cp">
+                        <option value="typical angina">Tipik Anjina</option>
+                        <option value="atypical angina">Atipik Anjina</option>
+                        <option value="non-anginal pain">Anjinal Olmayan</option>
+                        <option value="asymptomatic">Semptomsuz</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="trestbps">Tansiyon (Trestbps)</label>
+                    <input id="trestbps" type="number" name="trestbps" value="140" min="50" max="260" required>
+                </div>
+                <div class="form-group">
+                    <label for="chol">Kolesterol (Chol)</label>
+                    <input id="chol" type="number" name="chol" value="240" min="0" max="700" required>
+                </div>
+                <div class="form-group">
+                    <label for="fbs">Açlık Şekeri &gt; 120</label>
+                    <select id="fbs" name="fbs">
+                        <option value="False">Hayır</option>
+                        <option value="True">Evet</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="restecg">EKG Sonucu</label>
+                    <select id="restecg" name="restecg">
+                        <option value="normal">Normal</option>
+                        <option value="st-t abnormality">ST-T Anormalliği</option>
+                        <option value="lv hypertrophy">LV Hipertrofisi</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="thalch">Maks. Kalp Atışı</label>
+                    <input id="thalch" type="number" name="thalch" value="150" min="50" max="250" required>
+                </div>
+                <div class="form-group">
+                    <label for="exang">Egzersiz Ağrısı</label>
+                    <select id="exang" name="exang">
+                        <option value="False">Yok</option>
+                        <option value="True">Var</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="oldpeak">ST Depresyonu</label>
+                    <input id="oldpeak" type="number" step="0.1" name="oldpeak" value="1.5" min="-3" max="10" required>
+                </div>
+                <div class="form-group">
+                    <label for="slope">Eğim (Slope)</label>
+                    <select id="slope" name="slope">
+                        <option value="upsloping">Yukarı Eğimli</option>
+                        <option value="flat">Düz</option>
+                        <option value="downsloping">Aşağı Eğimli</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="ca">Damar Sayısı (CA)</label>
+                    <input id="ca" type="number" name="ca" value="0" min="0" max="3" required>
+                </div>
+                <div class="form-group">
+                    <label for="thal">Talasemi</label>
+                    <select id="thal" name="thal">
+                        <option value="normal">Normal</option>
+                        <option value="fixed defect">Sabit Kusur</option>
+                        <option value="reversable defect">Tersine Çevrilebilir</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn--primary btn--span">Yapay Zeka İle Analiz Et</button>
+            </form>
+
+            <div id="sonucKutusu" hidden></div>
+        </div>
+    </main>
+
+<script>
+    let hastaGeciciVeri = {};
+
+    async function tahminYap(event) {
+        event.preventDefault();
+
+        const buton = event.target.querySelector('button[type="submit"]');
+        buton.disabled = true;
+        buton.textContent = 'Analiz ediliyor…';
+
+        const kutu = document.getElementById('sonucKutusu');
+
+        try {
+            const veri = Object.fromEntries(new FormData(event.target).entries());
+            const response = await fetch('/tahmin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(veri)
+            });
+            const sonuc = await response.json();
+
+            if (sonuc.hata) throw new Error(sonuc.hata);
+
+            hastaGeciciVeri = veri;
+            hastaGeciciVeri.teshis = sonuc['Teşhis Sonucu'];
+            hastaGeciciVeri.risk = sonuc['Kalp Hastalığı Risk Oranı'];
+            hastaGeciciVeri.aciklama = sonuc['Yapay Zeka Açıklaması'];
+            hastaGeciciVeri.id = sonuc['hasta_id'];
+
+            sonucGoster(kutu, sonuc);
+        } catch (err) {
+            kutu.hidden = false;
+            kutu.className = 'sonuc';
+
+            const uyari = document.createElement('p');
+            uyari.className = 'aciklama-kutu';
+            uyari.textContent = `Analiz sırasında bir sorun oluştu: ${err.message}`;
+            kutu.replaceChildren(uyari);
+
+            console.error('Tahmin hatası:', err);
+        } finally {
+            buton.disabled = false;
+            buton.textContent = 'Yapay Zeka İle Analiz Et';
+        }
+    }
+
+    function sonucGoster(kutu, sonuc) {
+        const teshis = sonuc['Teşhis Sonucu'];
+        const risk = sonuc['Kalp Hastalığı Risk Oranı'];
+        const tehlikeli = riskliMi(teshis);
+
+        kutu.hidden = false;
+        kutu.className = `sonuc ${tehlikeli ? 'sonuc--riskli' : 'sonuc--saglikli'}`;
+
+        /* XSS koruması: sunucudan gelen teşhis/risk/açıklama metinleri
+           innerHTML ile değil, textContent ile basılır. */
+        const yarat = (etiket, sinif, metin) => {
+            const dugum = document.createElement(etiket);
+            if (sinif) dugum.className = sinif;
+            if (metin !== undefined) dugum.textContent = metin;
+            return dugum;
+        };
+
+        // Üst blok: ikon + teşhis
+        const ikon = yarat('span', 'sonuc__ikon', tehlikeli ? '⚠️' : '✅');
+        ikon.setAttribute('aria-hidden', 'true');
+
+        const ustBlok = yarat('div', 'sonuc__ust');
+        ustBlok.append(ikon, (() => {
+            const sarmal = document.createElement('div');
+            sarmal.append(
+                yarat('div', 'sonuc__etiket', 'Yapay Zeka Teşhisi'),
+                yarat('h2', 'sonuc__baslik', teshis)
+            );
+            return sarmal;
+        })());
+
+        // Risk oranı ve çubuk
+        const oranUst = yarat('div', 'sonuc__oran-ust');
+        oranUst.append(yarat('span', null, 'Kalp hastalığı risk oranı'), yarat('b', null, risk));
+
+        const dolgu = yarat('div', 'risk-bar__dolgu');
+        dolgu.style.width = `${oranSayisi(risk)}%`;
+        const cubuk = yarat('div', 'risk-bar');
+        cubuk.appendChild(dolgu);
+
+        const oranBlok = yarat('div', 'sonuc__oran');
+        oranBlok.append(oranUst, cubuk);
+
+        // XAI açıklaması
+        const aciklama = yarat('p', 'aciklama-kutu', `ℹ️ ${sonuc['Yapay Zeka Açıklaması']}`);
+
+        // Uzman geri bildirim bloğu
+        const dogruBtn = yarat('button', 'btn btn--ok', '👍 Doğru Teşhis');
+        dogruBtn.type = 'button';
+        dogruBtn.addEventListener('click', () => geribildirimGonder('Doğru'));
+
+        const yanlisBtn = yarat('button', 'btn btn--risk', '👎 Yanlış (Düzelt)');
+        yanlisBtn.type = 'button';
+        yanlisBtn.addEventListener('click', () => geribildirimGonder('Yanlış'));
+
+        const butonlar = yarat('div', 'feedback__butonlar');
+        butonlar.append(dogruBtn, yanlisBtn);
+
+        const feedbackMesaj = yarat('p', 'feedback__mesaj');
+        feedbackMesaj.id = 'feedbackMesaj';
+        feedbackMesaj.hidden = true;
+
+        const feedback = yarat('div', 'feedback');
+        feedback.append(
+            yarat('p', 'feedback__soru', 'Uzman görüşü (yeniden eğitim için): Yapay zekanın teşhisi doğru mu?'),
+            butonlar,
+            feedbackMesaj
+        );
+
+        // PDF butonu
+        const pdfBtn = yarat('button', 'btn btn--pdf btn--block', '📄 Raporu PDF Olarak İndir');
+        pdfBtn.type = 'button';
+        pdfBtn.style.marginTop = '20px';
+        pdfBtn.addEventListener('click', raporIndir);
+
+        kutu.replaceChildren(ustBlok, oranBlok, aciklama, feedback, pdfBtn);
+    }
+
+    async function geribildirimGonder(durum) {
+        const teshis = hastaGeciciVeri.teshis;
+        const gercekKarar = durum === 'Doğru'
+            ? teshis
+            : (riskliMi(teshis) ? 'Sağlıklı' : 'Riskli (Hasta Olabilir)');
+
+        const response = await fetch('/geribildirim', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                hasta_id: hastaGeciciVeri.id,
+                orijinal_teshis: teshis,
+                doktor_karari: gercekKarar
+            })
+        });
+        const sonuc = await response.json();
+
+        const mesaj = document.getElementById('feedbackMesaj');
+        mesaj.textContent = sonuc.mesaj;
+        mesaj.hidden = false;
+    }
+
+    function raporIndir() {
+        const h = hastaGeciciVeri;
+        pdfRaporIndir({
+            ad: h.ad, soyad: h.soyad,
+            yas: `${h.age} Yaş`, cinsiyet: h.sex,
+            cp: h.cp, tansiyon: h.trestbps, kolesterol: h.chol, fbs: h.fbs,
+            restecg: h.restecg, thalch: h.thalch, exang: h.exang,
+            oldpeak: h.oldpeak, slope: h.slope, ca: h.ca, thal: h.thal,
+            teshis: h.teshis, risk: h.risk, aciklama: h.aciklama,
+            tarih: new Date().toLocaleString('tr-TR'),
+            altBaslik: 'Detaylı Kardiyolojik Risk Analiz Raporu',
+            dosyaAdi: `${h.ad}_${h.soyad}_Rapor.pdf`
+        });
+    }
+</script>
+</body>
+</html>
