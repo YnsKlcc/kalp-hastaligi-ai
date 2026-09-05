@@ -48,3 +48,4 @@ joblib==1.5.3
 # kütüphanesinin parçasıdır; ayrıca kurulmaları gerekmez.
 # Testler (tests/) yalnızca standart kütüphaneyi kullanır;
 # pytest isteğe bağlıdır: `python tests/test_klinik.py` yeterlidir.
+gunicorn
