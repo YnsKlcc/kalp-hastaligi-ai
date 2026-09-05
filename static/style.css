@@ -1,473 +1,431 @@
 /* ==========================================================================
-   Klinik AI Asistan — Ortak Tasarım Sistemi
-   Tüm sayfalar (index / kayitlar / bilgi / egitim) bu tek dosyayı kullanır.
+   Klinik AI Asistan — Bileşen Katmanı
+
+   Sayfaların statik yapısı tamamen Tailwind yardımcı sınıflarıyla yazılmıştır.
+   Bu dosya yalnızca JavaScript'in ÜRETTİĞİ veya durumunu DEĞİŞTİRDİĞİ
+   sınıfları tanımlar — bunlar HTML'de görünmediği için Tailwind ile
+   yazılamaz (ör. sonuç kutusu className ile baştan yazılır, akordiyon
+   .active ile açılır, tablo mobilde karta dönüşür).
+
+   Renkler Tailwind'in slate / blue / emerald / red / amber paletinden
+   birebir alınmıştır; iki katman görsel olarak tek sistemdir.
+
+   YÜKLEME SIRASI ÖNEMLİ: Bu dosya Tailwind CDN betiğinden ÖNCE bağlanır,
+   böylece Tailwind yardımcı sınıfları gerektiğinde bu bileşenleri ezebilir.
    ========================================================================== */
 
-/* --- 1. Tasarım Değişkenleri (Design Tokens) ----------------------------- */
 :root {
-    /* Yüzeyler */
-    --bg:            #f4f7fb;
-    --surface:       #ffffff;
-    --surface-soft:  #f8fafc;
-    --surface-tint:  #eff4fd;
-    --border:        #e6ecf4;
-    --border-strong: #d3dce8;
+    --font: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto,
+            'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
 
-    /* Metin */
-    --text:       #0f172a;
-    --text-muted: #5b6b82;
-    --text-soft:  #8a99ae;
+    --slate-50:  #f8fafc;  --slate-100: #f1f5f9;  --slate-200: #e2e8f0;
+    --slate-300: #cbd5e1;  --slate-400: #94a3b8;  --slate-500: #64748b;
+    --slate-600: #475569;  --slate-700: #334155;  --slate-900: #0f172a;
 
-    /* Marka & durumlar */
-    --brand:       #2563eb;
-    --brand-dark:  #1d4ed8;
-    --brand-soft:  #e8f0fe;
-    --brand-ring:  rgba(37, 99, 235, .14);
+    --blue-50:  #eff6ff;   --blue-100: #dbeafe;   --blue-200: #bfdbfe;
+    --blue-500: #3b82f6;   --blue-600: #2563eb;   --blue-700: #1d4ed8;
+    --blue-800: #1e40af;
 
-    --ok:          #16a34a;
-    --ok-soft:     #eafaf0;
-    --ok-text:     #15803d;
+    --indigo-500: #6366f1; --indigo-600: #4f46e5;
 
-    --risk:        #dc2626;
-    --risk-soft:   #fef2f2;
-    --risk-text:   #b91c1c;
+    --emerald-50: #ecfdf5; --emerald-200: #a7f3d0;
+    --emerald-600: #059669; --emerald-700: #047857;
 
-    --warn:        #d97706;
-    --warn-soft:   #fffbeb;
+    --red-50: #fef2f2;     --red-200: #fecaca;
+    --red-600: #dc2626;    --red-700: #b91c1c;
 
-    /* Ölçü & efektler */
-    --nav-w:   264px;
-    --radius:  14px;
-    --radius-sm: 9px;
-    --radius-pill: 999px;
-
-    --shadow-xs: 0 1px 2px rgba(15, 23, 42, .05);
-    --shadow-sm: 0 1px 2px rgba(15, 23, 42, .04), 0 4px 12px -6px rgba(15, 23, 42, .10);
-    --shadow-md: 0 1px 2px rgba(15, 23, 42, .04), 0 10px 30px -12px rgba(15, 23, 42, .18);
-    --shadow-lg: 0 24px 60px -20px rgba(15, 23, 42, .34);
-
-    --ease: cubic-bezier(.4, 0, .2, 1);
+    --amber-50: #fffbeb;   --amber-200: #fde68a;
+    --amber-600: #d97706;  --amber-800: #92400e;
 }
 
-/* --- 2. Temel Sıfırlama & Tipografi -------------------------------------- */
-*, *::before, *::after { box-sizing: border-box; }
-
-html { -webkit-text-size-adjust: 100%; }
+/* Tek yazı tipi ailesi. Tailwind preflight yalnızca <html> üzerine yazdığı
+   için buradaki gövde/öğe tanımları geçerli kalır. */
+body,
+button, input, select, optgroup, textarea,
+pre, code, samp, kbd,
+table, th, td,
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font);
+}
 
 body {
-    margin: 0;
-    min-height: 100vh;
-    display: flex;
-    background-color: var(--bg);
-    color: var(--text);
-    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
-    font-size: 16px;
-    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-h1, h2, h3, h4 { margin: 0; line-height: 1.3; font-weight: 700; letter-spacing: -.01em; }
-p  { margin: 0; }
-a  { color: var(--brand); }
+/* Aşağıdaki bileşenlerin bir kısmı display:flex kullanıyor; bu, tarayıcının
+   [hidden] kuralını (display:none) ezerdi. JavaScript öğeleri hidden ile
+   gizlediği için (feedback mesajı, sonuç kutusu, menü perdesi) bu kural şart. */
+[hidden] { display: none !important; }
 
-:focus-visible {
-    outline: 3px solid var(--brand-ring);
-    outline-offset: 2px;
-    border-radius: 4px;
+/* Rakamlar tablolarda ve metriklerde eşit genişlikte hizalansın */
+table, .t-oran, .metrik-deger, input[type="number"], .page-btn {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
 }
 
-/* --- 3. Yerleşim: Sabit Sol Menü + Akan İçerik --------------------------- */
-.sidebar {
-    position: fixed;
-    inset: 0 auto 0 0;
-    width: var(--nav-w);
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 26px 14px;
-    overflow-y: auto;
-    background: linear-gradient(180deg, #16273f 0%, #101c2e 100%);
-    color: #e2e8f0;
-    z-index: 60;
-    transition: transform .28s var(--ease);
-}
+/* Lucide ikonları: boyut Tailwind (w-4 h-4) ile verilir, çizgi kalınlığı
+   burada inceltilir — 2px varsayılan, arayüz metniyle çok ağır kalıyor. */
+.lucide { stroke-width: 1.75; }
 
-.sidebar__brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 6px 12px 22px;
-    font-size: 1.18rem;
-    color: #ffffff;
-}
 
-.sidebar__brand span { font-size: 1.35rem; line-height: 1; }
+/* ==========================================================================
+   0. UYGULAMA KABUĞU — sol menü + mobil üst çubuk
 
-.sidebar a {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
-    border-radius: var(--radius-sm);
-    color: #b6c4d6;
-    font-size: .97rem;
-    font-weight: 500;
-    text-decoration: none;
-    transition: background-color .2s var(--ease), color .2s var(--ease);
-}
+   ÖNEMLİ: Bu kabuğu app.js sayfa yüklendikten SONRA DOM'a ekliyor. Tailwind
+   CDN'i yalnızca taradığı sınıflar için CSS üretir; sonradan eklenen düğümleri
+   MutationObserver ile yakalamaya çalışır ve bu yarış kaybedilebilir. O durumda
+   menü "-translate-x-full" ile ekran dışında kalır, gövdedeki lg:ml-64 ise
+   (statik olduğu için her zaman üretilir) solda 256px boş şerit bırakır —
+   sayfa menüsüz ve sağa itilmiş, "ayrı pencere" gibi görünür.
 
-.sidebar a:hover { background-color: rgba(255, 255, 255, .07); color: #ffffff; }
-
-.sidebar a[aria-current="page"] {
-    background-color: var(--brand);
-    color: #ffffff;
-    font-weight: 600;
-    box-shadow: 0 8px 20px -10px rgba(37, 99, 235, .9);
-}
-
-.sidebar__foot {
-    margin-top: auto;
-    padding: 16px 14px 4px;
-    font-size: .74rem;
-    line-height: 1.5;
-    color: #7d8ea5;
-    border-top: 1px solid rgba(255, 255, 255, .08);
-}
-
-.main-content {
-    flex: 1;
-    min-width: 0;
-    margin-left: var(--nav-w);
-    padding: clamp(22px, 3.4vw, 44px);
-}
-
-/* Mobil üst çubuk — sadece dar ekranlarda görünür */
-.topbar {
-    display: none;
+   Bu yüzden kabuğun biçimi Tailwind'e DEĞİL, buradaki gerçek CSS'e bağlıdır.
+   Kural: JavaScript'in ürettiği her şey bu dosyada biçimlenir.
+   ========================================================================== */
+.ust-cubuk {
     position: fixed;
     inset: 0 0 auto 0;
+    z-index: 40;
+    display: flex;
     align-items: center;
     gap: 12px;
-    height: 62px;
+    height: 56px;
     padding: 0 16px;
-    background: rgba(255, 255, 255, .92);
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid var(--border);
-    z-index: 50;
+    background-color: rgba(255, 255, 255, .92);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--slate-200);
 }
 
-.topbar__title { font-size: 1rem; font-weight: 700; }
+.ust-cubuk__marka {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 10px;
+}
+
+.ust-cubuk__ad,
+.topbar__ad {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: .9375rem;
+    font-weight: 600;
+    letter-spacing: -.015em;
+    color: var(--slate-900);
+}
 
 .nav-toggle {
     display: inline-flex;
+    flex: none;
     align-items: center;
     justify-content: center;
-    width: 42px;
-    height: 42px;
+    width: 36px;
+    height: 36px;
     padding: 0;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    color: var(--text);
-    font-size: 20px;
-    line-height: 1;
+    color: var(--slate-600);
+    background-color: #ffffff;
+    border: 1px solid var(--slate-300);
+    border-radius: 8px;
     cursor: pointer;
+    transition: background-color .15s, border-color .15s, color .15s;
 }
+.nav-toggle .lucide { width: 18px; height: 18px; }
+.nav-toggle:hover { background-color: var(--slate-50); color: var(--slate-900); border-color: var(--slate-400); }
 
 .nav-overlay {
-    display: none;
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, .48);
-    z-index: 55;
+    z-index: 40;
+    background-color: rgba(15, 23, 42, .5);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
 }
 
-body.nav-acik .nav-overlay { display: block; }
-
-/* --- 4. Sayfa Başlığı ---------------------------------------------------- */
-.header { margin-bottom: 26px; }
-.header h1 { font-size: clamp(1.5rem, 2.6vw, 2rem); }
-.header p  { margin-top: 8px; max-width: 68ch; color: var(--text-muted); font-size: 1.02rem; }
-
-/* --- 5. Kart & Bölüm Başlığı -------------------------------------------- */
-.card {
-    padding: clamp(20px, 2.6vw, 32px);
-    background-color: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-sm);
+.anamenu {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 256px;                 /* gövdedeki lg:ml-64 ile aynı */
+    padding: 16px 12px;
+    overflow-y: auto;
+    background-color: #ffffff;
+    border-right: 1px solid var(--slate-200);
+    box-shadow: 1px 0 3px rgba(15, 23, 42, .03);
+    transform: translateX(-100%);
+    transition: transform .3s cubic-bezier(.4, 0, .2, 1);
 }
+.anamenu.acik { transform: translateX(0); }
 
-.card + .card { margin-top: 22px; }
-
-.card__title {
+.anamenu__marka {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 18px;
-    font-size: 1rem;
-    color: var(--text);
-}
-
-/* Başlık + yanındaki aksiyonlar (ör. filtre butonları) */
-.card__ust {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 18px;
-}
-.card__ust .card__title { margin-bottom: 0; }
-
-.filtre-grubu { display: flex; flex-wrap: wrap; gap: 6px; }
-
-.filtre-btn {
-    padding: 7px 14px;
-    font: inherit;
-    font-size: .84rem;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding: 4px 8px 16px;
+    font-size: .9375rem;
     font-weight: 600;
-    color: var(--text-muted);
-    background-color: var(--surface-soft);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-pill);
-    cursor: pointer;
-    transition: background-color .2s var(--ease), color .2s var(--ease), border-color .2s var(--ease);
-}
-.filtre-btn:hover { background-color: var(--surface); border-color: var(--border-strong); color: var(--text); }
-.filtre-btn.active {
-    background-color: var(--brand);
-    border-color: var(--brand);
-    color: #ffffff;
+    letter-spacing: -.02em;
+    color: var(--slate-900);
+    border-bottom: 1px solid var(--slate-200);
 }
 
-/* Sayfa altı yönlendirme notu */
-.sayfa-notu {
-    margin-top: 20px;
-    padding: 14px 16px;
-    font-size: .88rem;
-    line-height: 1.7;
-    color: var(--text-muted);
-    background-color: var(--surface-tint);
-    border: 1px solid #dbe6f7;
-    border-radius: var(--radius-sm);
-}
-.sayfa-notu a { font-weight: 600; }
-
-/* --- 6. Form Alanları ---------------------------------------------------- */
-.form-grid {
-    display: grid;
-    /* Masaüstünde tam olarak 2 sütun (mobilde 768px altı tek sütuna iner) */
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px 20px;
-}
-
-.form-group { display: flex; flex-direction: column; gap: 7px; }
-
-.form-group label {
-    font-size: .74rem;
-    font-weight: 700;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-}
-
-input, select {
-    width: 100%;
-    padding: 12px 13px;
-    font: inherit;
-    font-size: .97rem;
-    color: var(--text);
-    background-color: var(--surface-soft);
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-sm);
-    transition: border-color .18s var(--ease), box-shadow .18s var(--ease), background-color .18s var(--ease);
-}
-
-input:hover, select:hover { border-color: #b8c5d6; }
-
-input:focus, select:focus {
-    outline: none;
-    background-color: var(--surface);
-    border-color: var(--brand);
-    box-shadow: 0 0 0 4px var(--brand-ring);
-}
-
-/* --- 7. Butonlar --------------------------------------------------------- */
-.btn {
+/* Marka simgesi: mavi degrade kare */
+.marka-tile {
     display: inline-flex;
+    flex: none;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 13px 22px;
-    font: inherit;
-    font-size: .97rem;
-    font-weight: 600;
-    border: 1px solid transparent;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: background-color .2s var(--ease), box-shadow .2s var(--ease), transform .1s var(--ease);
-}
-
-.btn:active { transform: translateY(1px); }
-
-.btn--primary {
-    background-color: var(--brand);
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    background-image: linear-gradient(135deg, #3b82f6 0%, var(--blue-600) 45%, var(--indigo-600) 100%);
     color: #ffffff;
-    box-shadow: 0 10px 24px -14px rgba(37, 99, 235, 1);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .10),
+                0 6px 16px -6px rgba(37, 99, 235, .55),
+                inset 0 1px 0 rgba(255, 255, 255, .22);
 }
-.btn--primary:hover { background-color: var(--brand-dark); }
+.marka-tile .lucide { width: 19px; height: 19px; }
 
-.btn--pdf { background-color: var(--surface); color: var(--text); border-color: var(--border-strong); }
-.btn--pdf:hover { background-color: var(--surface-soft); border-color: #b8c5d6; }
+.menu-baglanti {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: .9375rem;
+    font-weight: 500;
+    letter-spacing: -.01em;
+    color: var(--slate-600);
+    text-decoration: none;
+    transition: background-color .15s, color .15s;
+}
+.menu-baglanti .lucide {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    color: var(--slate-400);
+    transition: color .15s;
+}
+.menu-baglanti:hover { background-color: var(--slate-100); color: var(--slate-900); }
+.menu-baglanti:hover .lucide { color: var(--slate-600); }
 
-.btn--ok   { padding: 9px 14px; background-color: var(--ok-soft);   color: var(--ok-text);   border-color: #c9edd8; }
-.btn--risk { padding: 9px 14px; background-color: var(--risk-soft); color: var(--risk-text); border-color: #f6d0d0; }
-.btn--ok:hover   { background-color: #dcf5e6; }
-.btn--risk:hover { background-color: #fde5e5; }
+.menu-baglanti--aktif {
+    background-image: linear-gradient(to right, var(--blue-50) 0%, rgba(239, 246, 255, .35) 100%);
+    color: var(--blue-800);
+    font-weight: 600;
+    box-shadow: inset 0 0 0 1px rgba(191, 219, 254, .7);
+}
+.menu-baglanti--aktif .lucide { color: var(--blue-600); }
 
-.btn--block { width: 100%; }
-.btn--span  { grid-column: 1 / -1; margin-top: 6px; padding: 15px 22px; font-size: 1rem; }
-
-/* --- 8. Analiz Sonucu Kutusu -------------------------------------------- */
-.sonuc {
-    margin-top: 26px;
-    padding: 24px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background-color: var(--surface-soft);
-    animation: yukari .35s var(--ease);
+/* Aktif sayfayı gösteren sol aksan çubuğu */
+.menu-baglanti--aktif::before {
+    content: '';
+    position: absolute;
+    left: -12px;
+    top: 50%;
+    width: 3px;
+    height: 20px;
+    transform: translateY(-50%);
+    border-radius: 0 3px 3px 0;
+    background-image: linear-gradient(to bottom, var(--blue-500), var(--indigo-600));
+    box-shadow: 0 0 10px rgba(37, 99, 235, .55);
 }
 
-@keyframes yukari {
-    from { opacity: 0; transform: translateY(8px); }
+.anamenu__alt {
+    margin-top: auto;
+    padding: 14px 8px 2px;
+    font-size: .6875rem;
+    line-height: 1.6;
+    color: var(--slate-400);
+    border-top: 1px solid var(--slate-200);
+}
+
+/* Masaüstü: menü kalıcı olarak açık, mobil üst çubuk ve perde gizli */
+@media (min-width: 1024px) {
+    .anamenu { transform: translateX(0); }
+    .ust-cubuk,
+    .nav-overlay { display: none !important; }
+}
+
+/* Açılır menü oku. Tailwind'in arbitrary değeriyle (bg-[url(...)]) yazmak
+   uzun data-URI'lerde kırılgan olduğu için tek sınıfta tutuluyor; boyut,
+   kenarlık ve odak durumu yine Tailwind ile veriliyor. */
+.select-ok {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%2394a3b8' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' d='M1 1.5 6 6.5l5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right .75rem center;
+}
+
+/* ==========================================================================
+   1. Sayfalama düğmeleri  (kayitlar.html → tabloyuDoldur)
+   ========================================================================== */
+.page-btn {
+    min-width: 36px;
+    padding: 6px 12px;
+    font-size: .875rem;
+    font-weight: 500;
+    color: var(--slate-600);
+    background-color: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+    cursor: pointer;
+    transition: background-color .18s, color .18s, border-color .18s, box-shadow .18s;
+}
+.page-btn:hover {
+    background-color: var(--slate-50);
+    color: var(--slate-900);
+    border-color: var(--slate-300);
+}
+.page-btn.active {
+    background-image: linear-gradient(to right, var(--blue-600), var(--indigo-600));
+    border-color: transparent;
+    color: #ffffff;
+    box-shadow: 0 4px 12px -4px rgba(37, 99, 235, .55);
+}
+
+/* ==========================================================================
+   2. Filtre segmenti  (geribildirim.html → .active sınıfı JS ile taşınır)
+   ========================================================================== */
+.filtre-btn {
+    flex: 1 1 auto;
+    padding: 6px 16px;
+    font-size: .875rem;
+    font-weight: 500;
+    color: var(--slate-500);
+    background-color: transparent;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color .15s, color .15s, box-shadow .15s;
+}
+.filtre-btn:hover { color: var(--slate-900); }
+.filtre-btn.active {
+    background-color: #ffffff;
+    color: var(--slate-900);
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .10), 0 0 0 1px rgba(15, 23, 42, .04);
+}
+.durum .lucide { width: 15px; height: 15px; }
+
+@keyframes sonucGirisi {
+    from { opacity: 0; transform: translateY(6px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 
-.sonuc--riskli   { background-color: var(--risk-soft); border-color: #f7d5d5; }
-.sonuc--saglikli { background-color: var(--ok-soft);   border-color: #c9edd8; }
+/* ==========================================================================
+   7. Tablo hücre yardımcıları  (app.js → veriHucresi / bosSatir)
+   ========================================================================== */
+.t-tarih { font-size: .875rem; color: var(--slate-500); white-space: nowrap; }
+.t-isim  { font-weight: 500; color: var(--slate-900); }
+.t-oran  { font-weight: 600; color: var(--slate-900); }
+.t-bos   { padding: 44px 16px !important; text-align: center; color: var(--slate-500); }
 
-.sonuc__ust { display: flex; align-items: center; gap: 14px; }
-.sonuc__ikon { font-size: 1.9rem; line-height: 1; }
-.sonuc__etiket { font-size: .74rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
-.sonuc__baslik { font-size: 1.25rem; }
-.sonuc--riskli   .sonuc__baslik { color: var(--risk-text); }
-.sonuc--saglikli .sonuc__baslik { color: var(--ok-text); }
+.satir { cursor: pointer; }
+.satir:hover { background-color: var(--blue-50); }
 
-.sonuc__oran { margin-top: 20px; }
-.sonuc__oran-ust { display: flex; justify-content: space-between; align-items: baseline; font-size: .84rem; color: var(--text-muted); }
-.sonuc__oran-ust b { font-size: 1.05rem; color: var(--text); }
-
-.risk-bar {
-    height: 9px;
-    margin-top: 8px;
-    border-radius: var(--radius-pill);
-    background-color: rgba(15, 23, 42, .09);
-    overflow: hidden;
+/* Veri tablosunun taban görünümü. Bu tablolarda <td>'ler app.js tarafından
+   üretildiği için üzerlerine Tailwind sınıfı yazılamaz; taban stil buradan
+   gelir; rozet ve durum etiketleri ise rozetHucresi()'ne geçirilen Tailwind
+   sınıflarıyla biçimlendirilir. */
+.veri-tablosu {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: .9375rem;
 }
-.risk-bar__dolgu {
-    height: 100%;
-    border-radius: inherit;
-    background-color: var(--ok);
-    transition: width .6s var(--ease);
-}
-.sonuc--riskli .risk-bar__dolgu { background-color: var(--risk); }
-
-.aciklama-kutu {
-    margin-top: 18px;
-    padding: 13px 15px;
-    font-size: .9rem;
-    line-height: 1.65;
-    color: #92400e;
-    background-color: var(--warn-soft);
-    border: 1px solid #fbe7bd;
-    border-left: 3px solid var(--warn);
-    border-radius: var(--radius-sm);
-}
-
-/* --- 9. Uzman Geri Bildirim Bloğu --------------------------------------- */
-.feedback {
-    margin-top: 22px;
-    padding-top: 18px;
-    border-top: 1px dashed var(--border-strong);
-}
-.feedback__soru { margin-bottom: 12px; font-size: .88rem; color: var(--text-muted); }
-.feedback__butonlar { display: flex; flex-wrap: wrap; gap: 10px; }
-.feedback__mesaj {
-    margin-top: 12px;
-    font-size: .86rem;
+.veri-tablosu th {
+    padding: 9px 15px;
+    font-size: .6875rem;
     font-weight: 600;
-    color: var(--brand-dark);
-}
-
-/* --- 10. Rozetler -------------------------------------------------------- */
-.badge {
-    display: inline-block;
-    padding: 5px 12px;
-    font-size: .78rem;
-    font-weight: 600;
-    white-space: nowrap;
-    border-radius: var(--radius-pill);
-}
-
-.badge--riskli   { background-color: #fee2e2; color: #991b1b; }
-.badge--saglikli { background-color: #dcfce7; color: #166534; }
-.badge--ai       { background-color: #e0e7ff; color: #3730a3; }
-.badge--doktor   { background-color: #ffedd5; color: #9a3412; }
-.badge--iyi      { background-color: #dcfce7; color: #166534; }
-.badge--kotu     { background-color: #fee2e2; color: #991b1b; }
-
-.durum { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; white-space: nowrap; }
-.durum--dogru  { color: var(--ok); }
-.durum--yanlis { color: var(--risk); }
-
-/* --- 11. Tablolar (dar ekranda yatay kaydırmalı) ------------------------- */
-.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-
-table { width: 100%; border-collapse: collapse; text-align: left; }
-
-th, td { padding: 14px 16px; border-bottom: 1px solid var(--border); }
-
-th {
-    font-size: .74rem;
-    font-weight: 700;
-    letter-spacing: .04em;
+    letter-spacing: .07em;
     text-transform: uppercase;
-    color: var(--text-muted);
-    background-color: var(--surface-soft);
+    color: var(--slate-500);
+    background-image: linear-gradient(to bottom, #ffffff, var(--slate-50));
     white-space: nowrap;
+    border-bottom: 1px solid var(--slate-200);
+}
+.veri-tablosu td {
+    padding: 11px 15px;
+    color: var(--slate-700);
+    border-bottom: 1px solid var(--slate-100);
+}
+.veri-tablosu tbody tr { transition: background-color .12s; }
+.veri-tablosu tbody tr:hover { background-color: rgba(239, 246, 255, .55); }
+.veri-tablosu tbody tr:last-child td { border-bottom: none; }
+
+/* ==========================================================================
+   8. Duyarlı tablo: dar ekranda satırlar karta dönüşür
+   Tailwind ile yazılamaz çünkü hücreleri app.js üretir ve etiket metni
+   ::before + attr(data-label) ile gelir.
+   ========================================================================== */
+@media (max-width: 768px) {
+    .tablo-duyarli thead { display: none; }
+    .tablo-duyarli,
+    .tablo-duyarli tbody,
+    .tablo-duyarli tr,
+    .tablo-duyarli td { display: block; width: 100%; }
+
+    .tablo-duyarli tr {
+        margin-bottom: 10px;
+        background-color: #ffffff;
+        border: 1px solid var(--slate-200);
+        border-radius: 10px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+        overflow: hidden;
+    }
+    .tablo-duyarli tr:last-child { margin-bottom: 0; }
+    .tablo-duyarli tr:hover { background-color: #ffffff; }
+
+    .tablo-duyarli td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 9px 13px;
+        text-align: right;
+        border-bottom: 1px solid var(--slate-100);
+    }
+    .tablo-duyarli tr td:last-child { border-bottom: none; }
+
+    .tablo-duyarli td::before {
+        content: attr(data-label);
+        flex: none;
+        max-width: 42%;
+        font-size: .6875rem;
+        font-weight: 600;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: var(--slate-500);
+        text-align: left;
+    }
+
+    .tablo-duyarli .t-tarih { white-space: normal; }
+    /* Rozetler (rozetHucresi -> td > span) mobil kart gorunumunde
+       satira sigmayip tasmasin diye sarmalanabilir hale getirilir. */
+    .tablo-duyarli td > span { white-space: normal; text-align: right; }
+
+    .tablo-duyarli td.t-bos { display: block; text-align: center; }
+    .tablo-duyarli td.t-bos::before { content: none; }
 }
 
-tbody tr:last-child td { border-bottom: none; }
-tbody tr:hover { background-color: var(--surface-soft); }
-
-.t-tarih { font-size: .84rem; color: var(--text-muted); white-space: nowrap; }
-.t-isim  { font-weight: 600; color: var(--text); }
-.t-oran  { font-weight: 700; }
-.t-bos   { padding: 36px 16px; text-align: center; color: var(--text-muted); }
-
-tr.satir { cursor: pointer; }
-tr.satir:hover { background-color: var(--brand-soft); }
-
-/* --- 12. Sayfalama ------------------------------------------------------- */
-.pagination { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 22px; }
-
-.page-btn {
-    min-width: 40px;
-    padding: 8px 14px;
-    font: inherit;
-    font-weight: 600;
-    color: var(--text-muted);
-    background-color: var(--surface);
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: background-color .2s var(--ease), color .2s var(--ease);
+.accordion .lucide {
+    flex: none;
+    width: 17px;
+    height: 17px;
+    color: var(--slate-400);
+    transition: transform .25s cubic-bezier(.4, 0, .2, 1), color .25s;
 }
-.page-btn:hover { background-color: var(--surface-soft); color: var(--text); }
-.page-btn.active { background-color: var(--brand); border-color: var(--brand); color: #ffffff; }
+.accordion.active .lucide { transform: rotate(180deg); color: var(--blue-600); }
 
-/* --- 13. Modal ----------------------------------------------------------- */
+/* ==========================================================================
+   10. Modal  (kayitlar.html → classList.add('acik'))
+   ========================================================================== */
 .modal {
     display: none;
     position: fixed;
@@ -477,377 +435,19 @@ tr.satir:hover { background-color: var(--brand-soft); }
     justify-content: center;
     padding: 20px;
     background-color: rgba(15, 23, 42, .55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     overflow-y: auto;
 }
 .modal.acik { display: flex; }
 
-.modal__icerik {
-    width: 100%;
-    max-width: 620px;
-    max-height: 90vh;
-    overflow-y: auto;
-    padding: clamp(20px, 3vw, 30px);
-    background-color: var(--surface);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-lg);
-    animation: yukari .28s var(--ease);
-}
-
-.modal__ust { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-.modal__tarih {
-    margin: 6px 0 18px;
-    padding-bottom: 14px;
-    font-size: .84rem;
-    color: var(--text-muted);
-    border-bottom: 1px solid var(--border);
-}
-
-.modal__kapat {
-    flex: none;
-    width: 34px;
-    height: 34px;
-    padding: 0;
-    font-size: 22px;
-    line-height: 1;
-    color: var(--text-muted);
-    background: var(--surface-soft);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: background-color .2s var(--ease), color .2s var(--ease);
-}
-.modal__kapat:hover { background-color: #fee2e2; color: var(--risk); }
-
-.detay-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
-    gap: 2px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    background-color: var(--border);
-}
-
-.detay-grid > div {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 11px 14px;
-    font-size: .88rem;
-    background-color: var(--surface);
-}
-.detay-grid strong { color: var(--text-muted); font-weight: 600; }
-.detay-grid span { font-weight: 600; text-align: right; }
-
-.modal__ozet {
-    margin-top: 18px;
-    padding: 18px;
-    text-align: center;
-    background-color: var(--surface-soft);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-}
-.modal__ozet h3 { font-size: 1.05rem; }
-.modal__ozet h4 { margin: 4px 0 0; font-size: .9rem; font-weight: 600; color: var(--text-muted); }
-
-/* --- 14. Akordiyon (Bilgi Bankası) -------------------------------------- */
-.accordion {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-    width: 100%;
-    padding: 16px 18px;
-    font: inherit;
-    font-size: .98rem;
-    font-weight: 600;
-    text-align: left;
-    color: var(--text);
-    background-color: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: background-color .2s var(--ease), color .2s var(--ease), border-color .2s var(--ease);
-}
-
-.accordion + .panel { margin-bottom: 8px; }
-.accordion:hover { background-color: var(--surface-soft); border-color: var(--border-strong); }
-
-.accordion::after {
-    content: '+';
-    flex: none;
-    font-size: 20px;
-    font-weight: 400;
-    line-height: 1;
-    color: var(--text-soft);
-    transition: transform .25s var(--ease);
-}
-
-.accordion.active {
-    color: var(--brand-dark);
-    background-color: var(--brand-soft);
-    border-color: #c7dbfb;
-    border-bottom-color: transparent;
-    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-}
-.accordion.active::after { content: '\2212'; color: var(--brand-dark); }
-
-.panel {
-    max-height: 0;
-    overflow: hidden;
-    background-color: var(--surface);
-    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-    transition: max-height .3s ease-out;
-}
-
-.panel__icerik {
-    padding: 16px 18px 20px;
-    font-size: .93rem;
-    line-height: 1.75;
-    color: #334155;
-    border: 1px solid #c7dbfb;
-    border-top: none;
-    border-radius: inherit;
-}
-.panel__icerik p + p { margin-top: 10px; }
-
-/* --- 15. Metrik Kartları & Grafikler ------------------------------------ */
-.metrics-grid {
-    display: grid;
-    /* min() sarmalayıcı: kolon izi hiçbir zaman kapsayıcıdan geniş olamaz (yatay taşma koruması) */
-    grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
-    gap: 18px;
-    margin-bottom: 22px;
-}
-
-.metric-card {
-    padding: 20px;
-    text-align: center;
-    background-color: var(--surface);
-    border: 1px solid var(--border);
-    border-top: 3px solid var(--metric-renk, var(--brand));
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-sm);
-}
-.metric-card h4 {
-    font-size: .74rem;
-    font-weight: 700;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-}
-.metric-card__deger { margin-top: 8px; font-size: 1.85rem; font-weight: 700; color: var(--text); }
-
-.metric-card--acc  { --metric-renk: #2563eb; }
-.metric-card--rec  { --metric-renk: #10b981; }
-.metric-card--prec { --metric-renk: #f59e0b; }
-.metric-card--f1   { --metric-renk: #8b5cf6; }
-
-.charts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
-    gap: 18px;
-    margin-bottom: 22px;
-}
-.charts-grid--dashboard { grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); }
-
-.chart-card {
-    min-width: 0;
-    padding: 22px;
-    background-color: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-sm);
-}
-.chart-card h3 {
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    font-size: .95rem;
-    text-align: center;
-    color: var(--text);
-    border-bottom: 1px solid var(--border);
-}
-
-/* Chart.js tuvali sabit yükseklikte kalsın, taşma yapmasın */
-.chart-alan { position: relative; width: 100%; min-width: 0; height: clamp(220px, 30vh, 290px); }
-.chart-alan canvas { max-width: 100%; }
-
-/* Karmaşıklık matrisi */
-.cm-table { text-align: center; }
-.cm-table th, .cm-table td { padding: 12px; font-size: .86rem; border: 1px solid var(--border); }
-.cm-table th { background-color: var(--surface-soft); white-space: normal; }
-.cm-table tbody tr:hover { background-color: transparent; }
-.cm-table .cm-sayi { display: block; margin-top: 4px; font-size: 1.3rem; }
-
-.cm-tn { background-color: #dcfce7; color: #166534; font-weight: 600; }
-.cm-fp { background-color: #fef3c7; color: #92400e; font-weight: 600; }
-.cm-fn { background-color: #fee2e2; color: #991b1b; font-weight: 600; }
-.cm-tp { background-color: #dbeafe; color: #1e40af; font-weight: 600; }
-
-/* --- 16. PDF Rapor Şablonu (ekranda gizli, html2pdf için) ---------------- */
-.pdf-doc {
-    display: none;
-    width: 780px;
-    padding: 40px;
-    color: #1e293b;
-    background: #ffffff;
-    font-family: 'Segoe UI', Arial, sans-serif;
-}
-.pdf-doc__baslik { padding-bottom: 18px; margin-bottom: 26px; text-align: center; border-bottom: 3px solid #2563eb; }
-.pdf-doc__baslik h1 { font-size: 25px; color: #2563eb; }
-.pdf-doc__baslik p  { margin-top: 6px; font-size: 15px; color: #64748b; }
-
-.pdf-doc__kolonlar { display: flex; gap: 24px; }
-.pdf-doc__kolon { flex: 1; }
-.pdf-doc__kolon h3 { padding: 9px 12px; margin-bottom: 6px; font-size: 14px; background-color: #f1f5f9; border-radius: 5px; }
-.pdf-doc__kolon table { font-size: 12.5px; }
-.pdf-doc__kolon td { padding: 5px 0; border-bottom: 1px solid #eef2f7; }
-.pdf-doc__kolon td:last-child { text-align: right; font-weight: 600; }
-
-.pdf-doc__sonuc { margin-top: 24px; padding: 20px; text-align: center; border: 2px dashed #cbd5e1; border-radius: 10px; }
-.pdf-doc__sonuc h3 { font-size: 14px; color: #0f172a; }
-.pdf-doc__teshis { margin: 8px 0 4px; font-size: 21px; }
-.pdf-doc__risk { font-size: 15px; font-weight: 600; color: #64748b; }
-.pdf-doc__aciklama {
-    margin-top: 14px;
-    padding: 10px;
-    font-size: 13px;
-    font-style: italic;
-    color: #b45309;
-    background-color: #fffbeb;
-    border-radius: 5px;
-}
-.pdf-doc__imza { margin-top: 40px; padding-right: 16px; text-align: right; font-size: 13px; }
-.pdf-doc__imza .bosluk { height: 46px; }
-.pdf-doc__imza small { color: #64748b; }
-
-/* --- 17. Duyarlı (Responsive) Davranış ---------------------------------- */
-@media (max-width: 1024px) {
-    body { display: block; }
-
-    .topbar { display: flex; }
-
-    .sidebar {
-        width: min(84vw, var(--nav-w));
-        transform: translateX(-100%);
-        box-shadow: var(--shadow-lg);
-    }
-    body.nav-acik .sidebar { transform: translateX(0); }
-
-    .main-content { margin-left: 0; padding-top: 84px; }
-}
-
-/* ---- Tablet & telefon: her şey tek kolon, tam genişlik, yatay taşma yok ---- */
-@media (max-width: 768px) {
-
-    /* Güvenlik ağı: kök nedenler aşağıda giderildi, bu yalnızca son çare */
-    html, body { max-width: 100%; overflow-x: hidden; }
-
-    .main-content { width: 100%; max-width: 100%; padding: 80px 16px 28px; }
-
-    /* Uzun başlık/etiketler kutudan taşmasın */
-    h1, h2, h3, h4, p, td, th, .badge { overflow-wrap: break-word; word-break: break-word; }
-
-    /* 1) Metrik kartları ve grafikler: yan yana değil, alt alta ve %100 genişlik */
-    .metrics-grid,
-    .charts-grid,
-    .charts-grid--dashboard {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-    }
-
-    .metrics-grid > *,
-    .charts-grid > * {
-        width: 100%;
-        min-width: 0;
-        max-width: 100%;
-    }
-
-    .chart-card { padding: 16px; }
-    .chart-alan { height: 240px; }
-
-    /* Kart başlığı ve filtreler alt alta, filtreler tam genişlik */
-    .card__ust { flex-direction: column; align-items: stretch; gap: 10px; }
-    .filtre-grubu { width: 100%; }
-    .filtre-btn { flex: 1 1 auto; }
-
-    /* 2) Formlar da tek kolon, alanlar tam genişlik */
-    .form-grid { display: flex; flex-direction: column; gap: 14px; }
-    .form-grid > * { width: 100%; min-width: 0; }
-    input, select, .btn--span { width: 100%; }
-
-    /* 3) Karmaşıklık matrisi: kaydırmak yerine ekrana sığsın */
-    .cm-table { max-width: 100%; table-layout: fixed; }
-    .cm-table th,
-    .cm-table td { padding: 8px 6px; font-size: .72rem; white-space: normal; }
-    .cm-table .cm-sayi { font-size: 1.05rem; }
-
-    /* 4) Geniş veri tablosu: yatay kaydırma yerine kart görünümüne dönüşür */
-    .tablo-duyarli thead { display: none; }
-    .tablo-duyarli,
-    .tablo-duyarli tbody,
-    .tablo-duyarli tr,
-    .tablo-duyarli td { display: block; width: 100%; }
-
-    .tablo-duyarli tr {
-        margin-bottom: 12px;
-        background-color: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: var(--radius-sm);
-        overflow: hidden;
-    }
-    .tablo-duyarli tr:last-child { margin-bottom: 0; }
-    .tablo-duyarli tr:hover { background-color: var(--surface); }
-
-    .tablo-duyarli td {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 10px 14px;
-        text-align: right;
-        border-bottom: 1px solid var(--border);
-    }
-    .tablo-duyarli tr td:last-child { border-bottom: none; }
-
-    .tablo-duyarli td::before {
-        content: attr(data-label);
-        flex: none;
-        max-width: 42%;
-        font-size: .7rem;
-        font-weight: 700;
-        letter-spacing: .04em;
-        text-transform: uppercase;
-        color: var(--text-muted);
-        text-align: left;
-    }
-
-    .tablo-duyarli .t-tarih { white-space: normal; }
-    .tablo-duyarli .badge,
-    .tablo-duyarli .durum { white-space: normal; text-align: right; }
-
-    /* Boş durum satırı etiketsiz ve ortalı kalsın */
-    .tablo-duyarli td.t-bos { display: block; text-align: center; }
-    .tablo-duyarli td.t-bos::before { content: none; }
-}
-
 @media (max-width: 640px) {
-    body { font-size: 15px; }
-
-    .main-content { padding: 78px 16px 32px; }
-    .card { padding: 18px; }
-    .header { margin-bottom: 20px; }
-
-    th, td { padding: 12px 12px; }
-    .btn--span { padding: 14px 18px; }
-    .feedback__butonlar .btn { flex: 1 1 auto; }
-    .detay-grid > div { flex-direction: column; gap: 2px; }
-    .detay-grid span { text-align: left; }
     .modal { padding: 12px; align-items: flex-start; }
 }
 
-/* --- 18. Erişilebilirlik & Yazdırma ------------------------------------- */
+/* ==========================================================================
+   11. Erişilebilirlik & Yazdırma
+   ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
         animation-duration: .01ms !important;
@@ -855,8 +455,14 @@ tr.satir:hover { background-color: var(--brand-soft); }
     }
 }
 
+/* Yazdırma: gezinti kabuğu kâğıda basılmaz.
+   Burada eskiden hiçbir sayfada kullanılmayan bir .yazdirma-disi sınıfı
+   vardı; menü yine de yazdırılıyordu. Artık kabuğun gerçek seçicileri
+   gizleniyor. */
 @media print {
-    .sidebar, .topbar, .nav-overlay, .btn, .pagination { display: none !important; }
-    .main-content { margin: 0; padding: 0; }
-    .card, .chart-card, .metric-card { box-shadow: none; border-color: #cbd5e1; }
+    .ust-cubuk,
+    .anamenu,
+    .nav-overlay { display: none !important; }
+
+    main { margin: 0 !important; padding: 0 !important; }
 }

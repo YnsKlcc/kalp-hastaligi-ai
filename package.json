@@ -1,0 +1,13 @@
+{
+  "name": "klinik-ai-asistan",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Klinik AI Asistan - arayüz yapı araçları (Tailwind derlemesi)",
+  "scripts": {
+    "css": "tailwindcss -i ./src/tailwind-girdi.css -o ./static/tailwind.css --minify",
+    "css:watch": "tailwindcss -i ./src/tailwind-girdi.css -o ./static/tailwind.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "3.4.17"
+  }
+}

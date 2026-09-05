@@ -26,7 +26,7 @@ secrets.json
 credentials.json
 
 # --- Veritabanı: HASTA VERİSİ İÇERİR, depoya girmemeli ---
-# Uygulama ilk açılışta veritabani_hazirla() ile kendisi
+# Uygulama ilk açılışta klinik.veritabani.hazirla() ile kendisi
 # yeniden oluşturduğu için depoda tutulmasına gerek yoktur.
 *.db
 *.sqlite
@@ -34,6 +34,8 @@ credentials.json
 *.db-journal
 *.db-wal
 *.db-shm
+# Şema göçünde alınan otomatik yedekler de hasta verisi içerir.
+*.goc-yedegi-*
 
 # --- IDE / editör ---
 .idea/
@@ -58,14 +60,26 @@ htmlcov/
 # ============================================================
 # BİLEREK YOKSAYILMAYANLAR (dağıtım için gereklidir)
 #
-#   *.pkl                 -> rf_model, scaler, imputer'lar ve
-#                            label_encoders. main.py bunları
+#   model.pkl             -> ön işleme + sınıflandırıcıyı birlikte
+#                            içeren tek boru hattı. klinik.model
 #                            açılışta yükler; depoda olmazsa
 #                            uygulama hiç başlamaz.
-#   heart_disease_uci.csv -> /model_metrikleri endpoint'i bu
-#                            dosyayı çalışma anında okur.
-#   static/               -> ortak style.css ve app.js.
+#   heart_disease_uci.csv -> /model_metrikleri bu dosyayı çalışma
+#                            anında okur (test kümesi metrikleri).
+#   static/               -> style.css, app.js, derlenmiş Tailwind,
+#                            yerel yazı tipleri ve vendor kütüphaneleri.
+#                            Bunlar olmadan sayfalar stilsiz açılır.
 #
-# Bu dosyalar hassas veri içermez. rf_model.pkl ~2.2 MB'tır;
-# ileride model dosyaları büyürse Git LFS değerlendirilebilir.
+# Bu dosyalar hassas veri içermez. model.pkl ~4.7 MB'tır; ileride
+# model dosyaları büyürse Git LFS değerlendirilebilir.
 # ============================================================
+# --- Arayüz yapı araçları (Tailwind derlemesi) ---
+# node_modules depoya girmez; "npm install" ile yeniden kurulur.
+node_modules/
+npm-debug.log*
+
+# NOT: static/tailwind.css BİLEREK yoksayılmaz. Derlenmiş CSS depoda
+# tutulur ki uygulama Node.js kurulu olmayan bir sunucuda da doğrudan
+# çalışsın. Arayüz sınıfları değiştiğinde "npm run css" ile yenileyin.
+
+.aider*

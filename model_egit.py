@@ -1,4 +1,4 @@
-﻿import os
+import os
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.impute import SimpleImputer
@@ -34,8 +34,8 @@ X = df.drop(columns=['num'])
 y = df['num']
 
 # Sütunları Sayısal ve Kategorik (Metin) olarak ikiye ayırma
-numeric_cols = X.select_dtypes(include=['int64', 'float64']).columns
-categorical_cols = X.select_dtypes(include=['object', 'bool']).columns
+numeric_cols = X.select_dtypes(include=['number']).columns
+categorical_cols = X.select_dtypes(exclude=['number']).columns
 
 # Eksik verileri doldurma
 num_imputer = SimpleImputer(strategy='median') # Sayılar için medyan

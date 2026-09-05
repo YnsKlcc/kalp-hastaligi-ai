@@ -1,0 +1,9 @@
+/* ==========================================================================
+   Klinik AI Asistan - Tailwind girdi dosyası
+   Derlenmiş çıktı: static/tailwind.css  (npm run css)
+   Bu dosya tarayıcıya SUNULMAZ; yalnızca derleyicinin girdisidir.
+   ========================================================================== */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
